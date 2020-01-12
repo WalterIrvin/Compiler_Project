@@ -1,0 +1,17 @@
+{
+  "name": "typescript_compiler",
+  "version": "0.0.0",
+  "description": "Typescript_Compiler",
+  "main": "app.js",
+  "author": {
+    "name": ""
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.14",
+    "typescript": "^3.7.4"
+  }
+}
