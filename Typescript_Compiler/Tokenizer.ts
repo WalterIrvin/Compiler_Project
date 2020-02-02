@@ -29,10 +29,63 @@ export class Tokenizer
             let m = rex.exec(this.inputData);
             if (m)
             {
-                let lexeme = m[0];
+                let lexeme: string = m[0];
                 this.idx += lexeme.length;
-                let lineSplitter = lexeme.split("\n");
-                this.lineNumber += lineSplitter.length - 1;
+                let lastEnd: boolean = false; // used to determine if the last substring does not have a string following it
+                let notAString: boolean = true; // if not even string at all, ignore following checks
+                let notInString: boolean = true; // determines if we should process \n as end of line, or a component of a string
+                let startIdx = 0; // when to start the substring for checking \n if we encounter a string section and it closes before end of lexeme
+                let endIdx = lexeme.length; // where to stop searching in substring for \n
+                let subList: Array<string> = new Array<string>();
+                for (let idx = 0; idx < lexeme.length; idx++)
+                {
+                    let ch = lexeme.charAt(idx);
+                    if (ch === "\"")
+                    {
+                        notAString = false;
+                        if (notInString)
+                        {
+                            // " detected and we are not in string, start idx will whatever it was when we last exited a string
+                            // end idx will be the point at which we detect the new string
+                            endIdx = idx;
+                            let dist = endIdx - startIdx;
+                            if (dist > 0) 
+                            {
+                                let tmp = lexeme.substring(startIdx, endIdx);
+                                subList.push(tmp);
+                            }
+                            lastEnd = false;
+                        }
+                        else
+                        {
+                            // " detected and we are currently in string, start idx will be the current idx
+                            // endIdx has yet to be determined, but can be assumed the lexeme length until we encounter another "
+                            startIdx = idx;
+                            endIdx = lexeme.length;
+                            lastEnd = true;
+                        }
+                        notInString = !notInString;
+                    }
+                }
+                if (notAString)
+                {
+                    let lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                }
+                else
+                {
+                    //split for every \n found in non-string section
+                    subList.forEach((substr: string) => {
+                        let lineSplitter = substr.split("\n");
+                        this.lineNumber += lineSplitter.length - 1;
+                    });
+                    if (lastEnd)
+                    {
+                        let endString = lexeme.substring(startIdx, endIdx);
+                        let lineSplitter = endString.split("\n");
+                        this.lineNumber += lineSplitter.length - 1;
+                    }
+                }
                 if (sym !== "WHITESPACE" && sym !== "COMMENT")
                 {
                     //return new token using sym, lexeme, and line num
