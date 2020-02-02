@@ -1,7 +1,7 @@
 export class NonTerminal
 {
     label: string;
-    neighbors: NonTerminal[];
+    neighbors: Array<NonTerminal>;
     constructor(label: string)
     {
         this.label = label
@@ -10,5 +10,12 @@ export class NonTerminal
     setNeighbors(neighborList: Array<NonTerminal>)
     {
         this.neighbors = neighborList;
+    }
+    addNeighbors(neighborList: Array<NonTerminal>)
+    {
+        neighborList.forEach((item: NonTerminal) => { 
+            //appends new neighbors like using | would do
+            this.neighbors.push(item);
+        });
     }
 }

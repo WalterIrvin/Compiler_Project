@@ -1,0 +1,85 @@
+[{"name":"i1.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+ID -> \\w+
+
+expr -> expr / term | term
+term -> term * factor | factor
+factor -> ID | ( expr )
+","valid":false},{"name":"i2.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+ID -> \\w+
+
+expr -> expr + term | term
+term -> term * factor | factor
+factor -> ID | ( expr )
+blarg -> ID
+","valid":false},{"name":"i3.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+ID -> \\w+
+
+expr -> expr + term | term
+term -> term * factor | factor
+factor -> ID | ( expr )
+blarg -> boggle ID
+boggle -> boomtown ID
+boomtown -> ID
+","valid":false},{"name":"i4.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+ID -> \\w+
+NUM -> \\d+
+EQ -> =
+
+S -> assign
+expr -> expr + term | term
+term -> term * factor | factor
+factor -> ID | ( expr )
+assign -> ID EQ NUM
+","valid":false},{"name":"i5.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+ID -> \\w+
+
+expr -> expr + term | term
+term -> term * factor | factor | boom
+factor -> ID | ( expr )
+","valid":false},{"name":"i6.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+boom -> 42
+ID -> \\w+
+
+expr -> expr + term | term
+term -> term * factor | factor 
+factor -> ID | ( expr )
+","valid":false},{"name":"v1.txt","spec":"+ -> [+]
+* -> [*]
+( -> [(]
+) -> [)]
+ID -> \\w+
+
+expr -> expr + term | term
+term -> term * factor | factor
+factor -> ID | ( expr )
+","valid":true},{"name":"v2.txt","spec":"ADDOP -> [+]
+MULOP -> [*]
+LP -> [(]
+RP -> [)]
+ID -> \\w+
+
+expr -> expr ADDOP term 
+expr -> term
+term -> term MULOP factor 
+term -> factor
+factor -> ID
+factor -> LP expr RP
+","valid":true}]
