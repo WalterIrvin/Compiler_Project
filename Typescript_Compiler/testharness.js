@@ -13,16 +13,11 @@ function main() {
         console.log("Test " + i);
         var spec = tests[i]["tokenSpec"];
         var inp = tests[i]["input"];
-        console.log(inp);
         var expected = tests[i]["expected"];
         if (spec !== lastSpec) {
             G = new Grammar_1.Grammar(spec);
             T = new Tokenizer_1.Tokenizer(G);
-<<<<<<< HEAD
-            //ole.log("Creating tokenizer for "+tests[i]["gname"]+"...");
-=======
             console.log("Creating tokenizer for " + tests[i]["gname"] + "...");
->>>>>>> 23401b1af6fb8e41cc2ef40b6eba568bd450ea43
             lastSpec = spec;
         }
         else {
