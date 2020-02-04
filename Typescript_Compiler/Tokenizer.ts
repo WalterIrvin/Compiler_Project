@@ -31,6 +31,9 @@ export class Tokenizer
             {
                 let lexeme: string = m[0];
                 this.idx += lexeme.length;
+<<<<<<< HEAD
+                
+=======
                 let lastEnd: boolean = false; // used to determine if the last substring does not have a string following it
                 let notAString: boolean = true; // if not even string at all, ignore following checks
                 let notInString: boolean = true; // determines if we should process \n as end of line, or a component of a string
@@ -86,15 +89,22 @@ export class Tokenizer
                         this.lineNumber += lineSplitter.length - 1;
                     }
                 }
+>>>>>>> 23401b1af6fb8e41cc2ef40b6eba568bd450ea43
                 if (sym !== "WHITESPACE" && sym !== "COMMENT")
                 {
                     //return new token using sym, lexeme, and line num
-                    return new Token(terminal.sym, lexeme, this.lineNumber);
+                    let ret_token = new Token(terminal.sym, lexeme, this.lineNumber);
+                    let lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                    return ret_token;
                 }
                 else
                 {
                     //skip whitespace and get next real token
-                    return this.next();
+                    let lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                    let ret_token = this.next();
+                    return ret_token;
                 }
             }
         }

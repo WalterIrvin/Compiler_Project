@@ -22,6 +22,8 @@ var Tokenizer = /** @class */ (function () {
             if (m) {
                 var lexeme = m[0];
                 this.idx += lexeme.length;
+<<<<<<< HEAD
+=======
                 var lastEnd = false; // used to determine if the last substring does not have a string following it
                 var notAString = true; // if not even string at all, ignore following checks
                 var notInString = true; // determines if we should process \n as end of line, or a component of a string
@@ -69,13 +71,20 @@ var Tokenizer = /** @class */ (function () {
                         this.lineNumber += lineSplitter.length - 1;
                     }
                 }
+>>>>>>> 23401b1af6fb8e41cc2ef40b6eba568bd450ea43
                 if (sym !== "WHITESPACE" && sym !== "COMMENT") {
                     //return new token using sym, lexeme, and line num
-                    return new Token_1.Token(terminal.sym, lexeme, this.lineNumber);
+                    var ret_token = new Token_1.Token(terminal.sym, lexeme, this.lineNumber);
+                    var lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                    return ret_token;
                 }
                 else {
                     //skip whitespace and get next real token
-                    return this.next();
+                    var lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                    var ret_token = this.next();
+                    return ret_token;
                 }
             }
         }
