@@ -1,25 +1,20 @@
 import { Terminal } from "./Terminal";
-import { NonTerminal } from "./NonTerminal";
 
-export class Grammar
-{
+export class Grammar {
     m_terminals: Array<Terminal> = new Array<Terminal>();
     m_symbols: Set<string> = new Set<string>();
-    m_leftNonTerm: Map<string, NonTerminal> = new Map<string, NonTerminal>(); // terminals defined on left side
-    m_allNonTerms: Map<string, NonTerminal> = new Map<string, NonTerminal>(); // total terminals found on left-right side
+    m_nonterminals: Map<string, Array<Array<string>>> = new Map<string, Array<Array<string>>>();
+    m_nonterminalStart: string;
+    m_usedterminals: Set<string> = new Set<string>();
 
-    m_startVar: NonTerminal = null;
-    constructor(inputStr: string)
-    {
+    constructor(inputStr: string) {
         let terminal_section: Boolean = true;
         let varList = inputStr.split("\n");
-        for (let i = 0; i < varList.length - 1; i++)
-        {
-            if (terminal_section)
-            {
+        for (let i = 0; i < varList.length - 1; i++) {
+            if (terminal_section) {
                 let splitList = varList[i].split(" -> ", 2);
-                let symbol = "null";
-                let regex = "null";
+                let symbol = null;
+                let regex = null;
                 if (splitList.length == 2) {
                     symbol = splitList[0];
                     regex = splitList[1];
@@ -34,6 +29,7 @@ export class Grammar
                 }
                 else {
                     if (varList[i].length === 0) {
+                        this.m_terminals.push(new Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
                         terminal_section = false;
                         console.log("Terminal section over");
                     }
@@ -42,146 +38,89 @@ export class Grammar
                     }
                 }
             }
-            else
-            {
+            else {
                 // Non terminal section
                 let splitList = varList[i].split(" -> ", 2);
                 let leftSide = splitList[0];
-                let alternation = splitList[1].split("|"); // splits rhs into different | terms
-                for (let a = 0; a < alternation.length; a++)
+                let alternation = splitList[1].split(" | "); // splits rhs into different | terms
+                let newProdArray = new Array<Array<string>>();
+                
+                alternation.forEach((production: string) => {
+                    let productionList = new Array<string>();
+                    let nonTermsRightSide = production.split(" "); //splits each equation into individual terms seperated by space character.
+                    nonTermsRightSide.forEach((nonTerm: string) => {
+                        let nTerm = nonTerm.trim();
+                        if (nTerm !== '')
+                            productionList.push(nTerm);
+                    });
+                    newProdArray.push(productionList);
+
+                });
+                if (this.m_nonterminals.has(leftSide))
                 {
-                    let neighbor_list = alternation[a].split(" ");
-                    let n_set = new Set<string>(); // the local relative neighbors to this current NonTerminal
-                    for (let b = 0; b < neighbor_list.length; b++)
-                    {
-                        if (!n_set.has(neighbor_list[b]) && neighbor_list[b] !== "")
-                        {
-                            n_set.add(neighbor_list[b]);
-                        }
-                    }
-                    // construct the non Terminal and add to set if not already existing, if it already exists, add the two neighborlists together
-                    if (!this.m_leftNonTerm.has(leftSide))
-                    {
-                        this.add_new_nonTerminal(leftSide, n_set);
-                    }
-                    else
-                    {
-                        this.existing_terminal(leftSide, n_set);
-                    }
+                    //concat new productions to an existing nonterminal
+                    let oldList = this.m_nonterminals.get(leftSide);
+                    let newList = oldList.concat(newProdArray);
+                    this.m_nonterminals.set(leftSide, newList);
+                }
+                else
+                {
+                    if (this.m_nonterminals.size == 0)
+                        this.m_nonterminalStart = leftSide
+                    //Create new nonterminal
+                    this.m_nonterminals.set(leftSide, newProdArray);
                 }
             }
-           
         }
-        this.m_terminals.push(new Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
         this.check_valid();
     }
 
     check_valid()
     {
-        let terminalChecker: Set<string> = new Set<string>(); //gets the set of all reachable vars from the start variable
-        depth_first_search(this.m_startVar, terminalChecker);
-        // check if all non-terminals are defined
-        this.m_allNonTerms.forEach((value, key) => {
-            if (!this.m_leftNonTerm.has(key))
+        console.log(this.m_nonterminals);
+        let neighborSet = new Set<string>();
+        this.depth_first_search(this.m_nonterminalStart, neighborSet);
+        console.log(neighborSet);
+
+        //nonterminal usage check
+        this.m_nonterminals.forEach((value: string[][], symbol: string) => {
+            if (!neighborSet.has(symbol))
             {
-                throw Error("Error: Undefined non-terminal: " + key);
+                throw Error("Error: there is an unreachable nonterminal: " + symbol);
             }
         });
 
-        //check that all non-terminals are reachable from the start variable
-        this.m_leftNonTerm.forEach((value, key) => {
-            if (!terminalChecker.has(key))
+        //terminal usage check
+        this.m_symbols.forEach((symbol: string) => {
+            if (!this.m_usedterminals.has(symbol))
             {
-                // If the terminal is not within the group which can be reached from start, error
-                throw Error("Error: Unreachable non-terminal: " + key);
+                throw Error("Error: this is an unused terminal: " + symbol);
             }
         });
     }
 
-    existing_terminal(leftSide: string, n_set: Set<string>)
+    depth_first_search(label: string, neighborSet: Set<string>)
     {
-        if (this.m_symbols.has(leftSide)) {
-            //Attempting to redefine a terminal in non-terminal section, error
-            throw Error("Error: Attempting to redefine a terminal in non-terminal section: " + leftSide);
-        }
-        if (!this.m_leftNonTerm.has(leftSide))
-        {
-            //definition is not currently on left - side, so add existing var to the leftside map.
-            let nTerm: NonTerminal = this.m_allNonTerms.get(leftSide)
-            this.m_leftNonTerm.set(leftSide, nTerm);
-        }
-        let tmp_list: Array<NonTerminal> = new Array<NonTerminal>(); //tmp list to add new neighbors / referenced neighbors
-        // this nonterminal already exists in the nonTermLabel set, so append all unique terms to the neighbor set of this variable
-        n_set.forEach((label: string) => {
-            if (!this.m_allNonTerms.has(label))
-            {
-                //Neighbor hasn't yet been seen in the label set, so create new NonTerminal
-                if (!this.m_symbols.has(label)) {
-                    //If this thing is not a terminal, then add to all non-terminal map.
-                    let nTerm: NonTerminal = new NonTerminal(label);
-                    this.m_allNonTerms.set(label, nTerm);
-                    tmp_list.push(nTerm);
+        //When entering the search, add the label to the set of neighbors and then visit all of its neighbors
+        neighborSet.add(label);
+        let productionList: Array<Array<string>> = this.m_nonterminals.get(label);
+        productionList.forEach((production: string[]) => {
+            //Go through each production, which is a list of symbols representing terminals/nonterminals
+            production.forEach((symbol: string) => {
+                //Each symbol in a single production, will either be a terminal or nonterminal
+                if (!this.m_symbols.has(symbol) && !this.m_nonterminals.has(symbol)) {
+                    throw Error("Error: symbol not defined: " + symbol);
                 }
-            }
-            else
-            {
-                //Neighbor already exists
-                let nTerm: NonTerminal = this.m_allNonTerms.get(label);
-                tmp_list.push(nTerm);
-            }
-        });
-        //append new found neighbors to existing item
-        this.m_leftNonTerm.get(leftSide).addNeighbors(tmp_list);
-    }
-
-    add_new_nonTerminal(leftSide: string, n_set: Set<string>)
-    {
-        if (this.m_symbols.has(leftSide))
-        {
-            //Attempting to redefine a terminal in non-terminal section, error
-            throw Error("Error: Attempting to redefine a terminal in non-terminal section: " + leftSide);
-        }
-        let tmp_list: Array<NonTerminal> = new Array<NonTerminal>(); //tmp list to add new neighbors / referenced neighbors
-        // The nonTerm has not been created yet, so its neighbor list is whatever it is created with
-        let nonTerm: NonTerminal = new NonTerminal(leftSide);
-        if (this.m_leftNonTerm.size == 0)  // checks if this is the first non terminal, if so sets it to be the start variable
-        {
-            this.m_startVar = nonTerm;
-        }
-        this.m_leftNonTerm.set(leftSide, nonTerm); //Adds defined non terminal to the left side map.
-        this.m_allNonTerms.set(leftSide, nonTerm); //Adds to list of all non-terminals
-        n_set.forEach((label: string) => {
-            if (!this.m_allNonTerms.has(label))
-            {
-                //Neighbor hasn't yet been seen in the label set, so create new NonTerminal
-                if (!this.m_symbols.has(label))
+                else if (this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
+                    //recursively check this new symbols neighbors
+                    this.depth_first_search(symbol, neighborSet);
+                }
+                else if (this.m_symbols.has(symbol))
                 {
-                    //If this thing is not a terminal, then add to all non-terminal map.
-                    let nTerm: NonTerminal = new NonTerminal(label);
-                    this.m_allNonTerms.set(label, nTerm);
-                    tmp_list.push(nTerm);
+                    //add a terminal to the used terminals list
+                    this.m_usedterminals.add(symbol);
                 }
-                
-            }
-            else
-            {
-                //Neighbor already exists
-                let nTerm: NonTerminal = this.m_allNonTerms.get(label);
-                tmp_list.push(nTerm);
-            }
+            });
         });
-        nonTerm.setNeighbors(tmp_list);
     }
-}
-
-function depth_first_search(N: NonTerminal, neighborSet: Set<string>)
-{
-    console.log("TEST: " + N.label);
-    neighborSet.add(N.label);
-    N.neighbors.forEach((w: NonTerminal) => {
-        if (!neighborSet.has(w.label))
-        {
-            depth_first_search(w, neighborSet);
-        }
-    });
 }

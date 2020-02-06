@@ -20,7 +20,8 @@ function main(){
         let valid = tests[i]["valid"];
         let name = tests[i]["name"];
         
-        try{
+        try {
+            console.log(spec);
             let G = new Grammar(spec);
             if( valid ){
             } else {

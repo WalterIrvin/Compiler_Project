@@ -12,6 +12,7 @@ function main() {
         var valid = tests[i]["valid"];
         var name_1 = tests[i]["name"];
         try {
+            console.log(spec);
             var G_1 = new Grammar_1.Grammar(spec);
             if (valid) {
             }

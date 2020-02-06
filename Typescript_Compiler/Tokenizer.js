@@ -21,15 +21,19 @@ var Tokenizer = /** @class */ (function () {
             if (m) {
                 var lexeme = m[0];
                 this.idx += lexeme.length;
-                var lineSplitter = lexeme.split("\n");
-                this.lineNumber += lineSplitter.length - 1;
                 if (sym !== "WHITESPACE" && sym !== "COMMENT") {
                     //return new token using sym, lexeme, and line num
-                    return new Token_1.Token(terminal.sym, lexeme, this.lineNumber);
+                    var ret_token = new Token_1.Token(terminal.sym, lexeme, this.lineNumber);
+                    var lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                    return ret_token;
                 }
                 else {
                     //skip whitespace and get next real token
-                    return this.next();
+                    var lineSplitter = lexeme.split("\n");
+                    this.lineNumber += lineSplitter.length - 1;
+                    var ret_token = this.next();
+                    return ret_token;
                 }
             }
         }
