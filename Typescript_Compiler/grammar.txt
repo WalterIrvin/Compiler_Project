@@ -1,0 +1,10 @@
+SEMI -> ;
+ID -> [A-Za-z]+\w
+NUM -> \d+
+POWOP -> \*\*
+NEGATE -> [-]
+MULOP -> [*/]
+ADDOP -> [-+]
+LPR -> [(]
+RPR -> [)]
+BITNOT -> [~]

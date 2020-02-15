@@ -2,7 +2,8 @@
 exports.__esModule = true;
 var Terminal_1 = require("./Terminal");
 var Grammar = /** @class */ (function () {
-    function Grammar(inputStr) {
+    function Grammar(inputStr, tokenOnlyFlag) {
+        if (tokenOnlyFlag === void 0) { tokenOnlyFlag = false; }
         this.m_terminals = new Array();
         this.m_symbols = new Set();
         this.m_nonterminals = new Map();
@@ -16,7 +17,7 @@ var Grammar = /** @class */ (function () {
                 var regex = null;
                 if (splitList.length == 2) {
                     symbol = splitList[0];
-                    regex = splitList[1];
+                    regex = splitList[1].trim();
                     var terminalRegex = RegExp(regex, "gy");
                     var term = new Terminal_1.Terminal(symbol, terminalRegex);
                     if (this_1.m_symbols.has(symbol)) {
@@ -27,13 +28,15 @@ var Grammar = /** @class */ (function () {
                     console.log(term.sym + " : " + term.rex);
                 }
                 else {
-                    if (varList[i].length === 0) {
-                        this_1.m_terminals.push(new Terminal_1.Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
-                        terminal_section = false;
-                        console.log("Terminal section over");
-                    }
-                    else {
-                        throw Error("Syntax error: " + varList[i] + " is invalid declaration");
+                    if (!tokenOnlyFlag) {
+                        if (varList[i].length === 0) {
+                            this_1.m_terminals.push(new Terminal_1.Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
+                            terminal_section = false;
+                            console.log("Terminal section over");
+                        }
+                        else {
+                            throw Error("Syntax error: " + varList[i] + " is invalid declaration");
+                        }
                     }
                 }
             }
@@ -65,13 +68,13 @@ var Grammar = /** @class */ (function () {
                     //Create new nonterminal
                     this_1.m_nonterminals.set(leftSide, newProdArray_1);
                 }
+                this_1.check_valid();
             }
         };
         var this_1 = this;
         for (var i = 0; i < varList.length - 1; i++) {
             _loop_1(i);
         }
-        this.check_valid();
     }
     Grammar.prototype.check_valid = function () {
         var _this = this;
@@ -97,23 +100,25 @@ var Grammar = /** @class */ (function () {
         //When entering the search, add the label to the set of neighbors and then visit all of its neighbors
         neighborSet.add(label);
         var productionList = this.m_nonterminals.get(label);
-        productionList.forEach(function (production) {
-            //Go through each production, which is a list of symbols representing terminals/nonterminals
-            production.forEach(function (symbol) {
-                //Each symbol in a single production, will either be a terminal or nonterminal
-                if (!_this.m_symbols.has(symbol) && !_this.m_nonterminals.has(symbol)) {
-                    throw Error("Error: symbol not defined: " + symbol);
-                }
-                else if (_this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
-                    //recursively check this new symbols neighbors
-                    _this.depth_first_search(symbol, neighborSet);
-                }
-                else if (_this.m_symbols.has(symbol)) {
-                    //add a terminal to the used terminals list
-                    _this.m_usedterminals.add(symbol);
-                }
+        if (productionList !== undefined) {
+            productionList.forEach(function (production) {
+                //Go through each production, which is a list of symbols representing terminals/nonterminals
+                production.forEach(function (symbol) {
+                    //Each symbol in a single production, will either be a terminal or nonterminal
+                    if (!_this.m_symbols.has(symbol) && !_this.m_nonterminals.has(symbol)) {
+                        throw Error("Error: symbol not defined: " + symbol);
+                    }
+                    else if (_this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
+                        //recursively check this new symbols neighbors
+                        _this.depth_first_search(symbol, neighborSet);
+                    }
+                    else if (_this.m_symbols.has(symbol)) {
+                        //add a terminal to the used terminals list
+                        _this.m_usedterminals.add(symbol);
+                    }
+                });
             });
-        });
+        }
     };
     return Grammar;
 }());

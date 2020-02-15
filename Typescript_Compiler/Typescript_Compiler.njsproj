@@ -32,10 +32,12 @@
     <None Include="Grammar.ts" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="tests.txt" />
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="shuntingyard.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="testharness.ts" />
     <TypeScriptCompile Include="Tokenizer.ts">
       <SubType>Code</SubType>

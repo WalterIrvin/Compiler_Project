@@ -7,7 +7,7 @@ export class Grammar {
     m_nonterminalStart: string;
     m_usedterminals: Set<string> = new Set<string>();
 
-    constructor(inputStr: string) {
+    constructor(inputStr: string, tokenOnlyFlag: boolean=false) {
         let terminal_section: Boolean = true;
         let varList = inputStr.split("\n");
         for (let i = 0; i < varList.length - 1; i++) {
@@ -17,7 +17,7 @@ export class Grammar {
                 let regex = null;
                 if (splitList.length == 2) {
                     symbol = splitList[0];
-                    regex = splitList[1];
+                    regex = splitList[1].trim();
                     let terminalRegex = RegExp(regex, "gy");
                     let term: Terminal = new Terminal(symbol, terminalRegex);
                     if (this.m_symbols.has(symbol)) {
@@ -28,13 +28,16 @@ export class Grammar {
                     console.log(term.sym + " : " + term.rex);
                 }
                 else {
-                    if (varList[i].length === 0) {
-                        this.m_terminals.push(new Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
-                        terminal_section = false;
-                        console.log("Terminal section over");
-                    }
-                    else {
-                        throw Error("Syntax error: " + varList[i] + " is invalid declaration");
+                    if (!tokenOnlyFlag)
+                    {
+                        if (varList[i].length === 0) {
+                            this.m_terminals.push(new Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
+                            terminal_section = false;
+                            console.log("Terminal section over");
+                        }
+                        else {
+                            throw Error("Syntax error: " + varList[i] + " is invalid declaration");
+                        }
                     }
                 }
             }
@@ -70,9 +73,10 @@ export class Grammar {
                     //Create new nonterminal
                     this.m_nonterminals.set(leftSide, newProdArray);
                 }
+                this.check_valid();
             }
         }
-        this.check_valid();
+        
     }
 
     check_valid()
@@ -104,23 +108,25 @@ export class Grammar {
         //When entering the search, add the label to the set of neighbors and then visit all of its neighbors
         neighborSet.add(label);
         let productionList: Array<Array<string>> = this.m_nonterminals.get(label);
-        productionList.forEach((production: string[]) => {
-            //Go through each production, which is a list of symbols representing terminals/nonterminals
-            production.forEach((symbol: string) => {
-                //Each symbol in a single production, will either be a terminal or nonterminal
-                if (!this.m_symbols.has(symbol) && !this.m_nonterminals.has(symbol)) {
-                    throw Error("Error: symbol not defined: " + symbol);
-                }
-                else if (this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
-                    //recursively check this new symbols neighbors
-                    this.depth_first_search(symbol, neighborSet);
-                }
-                else if (this.m_symbols.has(symbol))
-                {
-                    //add a terminal to the used terminals list
-                    this.m_usedterminals.add(symbol);
-                }
+        if (productionList !== undefined)
+        {
+            productionList.forEach((production: string[]) => {
+                //Go through each production, which is a list of symbols representing terminals/nonterminals
+                production.forEach((symbol: string) => {
+                    //Each symbol in a single production, will either be a terminal or nonterminal
+                    if (!this.m_symbols.has(symbol) && !this.m_nonterminals.has(symbol)) {
+                        throw Error("Error: symbol not defined: " + symbol);
+                    }
+                    else if (this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
+                        //recursively check this new symbols neighbors
+                        this.depth_first_search(symbol, neighborSet);
+                    }
+                    else if (this.m_symbols.has(symbol)) {
+                        //add a terminal to the used terminals list
+                        this.m_usedterminals.add(symbol);
+                    }
+                });
             });
-        });
+        }
     }
 }
