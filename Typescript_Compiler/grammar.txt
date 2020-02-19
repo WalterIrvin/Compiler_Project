@@ -5,6 +5,6 @@ POWOP -> \*\*
 NEGATE -> [-]
 MULOP -> [*/]
 ADDOP -> [-+]
-LPR -> [(]
-RPR -> [)]
+LPAREN -> [(]
+RPAREN -> [)]
 BITNOT -> [~]

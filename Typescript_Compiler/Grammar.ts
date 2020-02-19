@@ -12,11 +12,11 @@ export class Grammar {
         let varList = inputStr.split("\n");
         for (let i = 0; i < varList.length - 1; i++) {
             if (terminal_section) {
-                let splitList = varList[i].split(" -> ", 2);
+                let splitList = varList[i].split("->", 2);
                 let symbol = null;
                 let regex = null;
                 if (splitList.length == 2) {
-                    symbol = splitList[0];
+                    symbol = splitList[0].trim();
                     regex = splitList[1].trim();
                     let terminalRegex = RegExp(regex, "gy");
                     let term: Terminal = new Terminal(symbol, terminalRegex);

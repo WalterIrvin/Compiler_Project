@@ -11,6 +11,10 @@ export class Tokenizer {
         this.idx = 0;
         this.inputData = ""
     }
+    previous(): Token {
+
+        return undefined;
+    }
     next(): Token {
         if (this.idx >= this.inputData.length - 1) {
             return new Token("$", undefined, this.lineNumber);
