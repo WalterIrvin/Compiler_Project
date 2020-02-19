@@ -10,6 +10,7 @@ var Grammar = /** @class */ (function () {
         this.m_usedterminals = new Set();
         var terminal_section = true;
         var varList = inputStr.split("\n");
+        this.m_terminals.push(new Terminal_1.Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
         var _loop_1 = function (i) {
             if (terminal_section) {
                 var splitList = varList[i].split("->", 2);
@@ -27,10 +28,9 @@ var Grammar = /** @class */ (function () {
                     this_1.m_symbols.add(symbol);
                     //console.log(term.sym + " : " + term.rex);
                 }
-                else {
+                else { // split len != 2
                     if (!tokenOnlyFlag) {
                         if (varList[i].length === 0) {
-                            this_1.m_terminals.push(new Terminal_1.Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
                             terminal_section = false;
                             console.log("Terminal section over");
                         }

@@ -10,6 +10,7 @@ export class Grammar {
     constructor(inputStr: string, tokenOnlyFlag: boolean=false) {
         let terminal_section: Boolean = true;
         let varList = inputStr.split("\n");
+        this.m_terminals.push(new Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
         for (let i = 0; i < varList.length; i++) {
             if (terminal_section) {
                 let splitList = varList[i].split("->", 2);
@@ -27,11 +28,10 @@ export class Grammar {
                     this.m_symbols.add(symbol);
                     //console.log(term.sym + " : " + term.rex);
                 }
-                else {
+                else { // split len != 2
                     if (!tokenOnlyFlag)
                     {
                         if (varList[i].length === 0) {
-                            this.m_terminals.push(new Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
                             terminal_section = false;
                             console.log("Terminal section over");
                         }
