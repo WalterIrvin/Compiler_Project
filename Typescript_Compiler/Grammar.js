@@ -12,11 +12,11 @@ var Grammar = /** @class */ (function () {
         var varList = inputStr.split("\n");
         var _loop_1 = function (i) {
             if (terminal_section) {
-                var splitList = varList[i].split(" -> ", 2);
+                var splitList = varList[i].split("->", 2);
                 var symbol = null;
                 var regex = null;
                 if (splitList.length == 2) {
-                    symbol = splitList[0];
+                    symbol = splitList[0].trim();
                     regex = splitList[1].trim();
                     var terminalRegex = RegExp(regex, "gy");
                     var term = new Terminal_1.Terminal(symbol, terminalRegex);
@@ -25,7 +25,7 @@ var Grammar = /** @class */ (function () {
                     }
                     this_1.m_terminals.push(term);
                     this_1.m_symbols.add(symbol);
-                    console.log(term.sym + " : " + term.rex);
+                    //console.log(term.sym + " : " + term.rex);
                 }
                 else {
                     if (!tokenOnlyFlag) {
@@ -72,7 +72,7 @@ var Grammar = /** @class */ (function () {
             }
         };
         var this_1 = this;
-        for (var i = 0; i < varList.length - 1; i++) {
+        for (var i = 0; i < varList.length; i++) {
             _loop_1(i);
         }
     }

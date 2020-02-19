@@ -7,11 +7,14 @@ var Tokenizer = /** @class */ (function () {
         this.lineNumber = 1;
         this.idx = 0;
         this.inputData = "";
+        this.previous = undefined;
+        this.current = undefined;
     }
     Tokenizer.prototype.next = function () {
         if (this.idx >= this.inputData.length - 1) {
             return new Token_1.Token("$", undefined, this.lineNumber);
         }
+        this.previous = this.current; // function returns the next token, so the current token is the previous to that.
         for (var i = 0; i < this.grammar.m_terminals.length; i++) {
             var terminal = this.grammar.m_terminals[i];
             var sym = terminal.sym;
@@ -23,10 +26,10 @@ var Tokenizer = /** @class */ (function () {
                 this.idx += lexeme.length;
                 if (sym !== "WHITESPACE" && sym !== "COMMENT") {
                     //return new token using sym, lexeme, and line num
-                    var ret_token = new Token_1.Token(terminal.sym, lexeme, this.lineNumber);
+                    this.current = new Token_1.Token(terminal.sym, lexeme, this.lineNumber);
                     var lineSplitter = lexeme.split("\n");
                     this.lineNumber += lineSplitter.length - 1;
-                    return ret_token;
+                    return this.current;
                 }
                 else {
                     //skip whitespace and get next real token

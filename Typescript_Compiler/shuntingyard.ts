@@ -6,29 +6,35 @@ let fs = require("fs");
 export function parse(inputData: string): TreeNode {
     let data: string = fs.readFileSync("grammar.txt", "utf8");
     let precedence: Map<string, number> = new Map<string, number>();
-    precedence.set("LPAREN", 4).set("POWOP", 3).set("MULOP", 2).set("ADDOP", 1);
+    precedence.set("LPAREN", 0).set("POWOP", 3).set("MULOP", 2).set("ADDOP", 1);
     let associativity: Map<string, string> = new Map<string, string>();
-    associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left");
+    associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right");
+    let arity: Map<string, number> = new Map<string, number>();
+    arity.set("func-call", 2).set("BITNOT", 1).set("NEGATE", 1).set("POWOP", 2).set("MULOP", 2).set("ADDOP", 2).set("ADDOP", 2).set("COMMA", 1);
     let inputGrammar: Grammar = new Grammar(data, true);
     let tokenGenerator: Tokenizer = new Tokenizer(inputGrammar);
     tokenGenerator.setInput(inputData);
-    let cur_token = tokenGenerator.next();
+
     let operatorStack = new Array<TreeNode>();
     let operandStack = new Array<TreeNode>();
 
-    while (cur_token.sym !== "$") {
-        cur_token = tokenGenerator.next();
-        if (cur_token.lexeme === "-") {
-            let p = tokenGenerator.previous();
+    while (true) {
+        let t = tokenGenerator.next();
+        if (t.sym === "$") {
+            //Tokenizer reached end if true
+            break;
+        }
+        if (t.lexeme === "-") {
+            let p = tokenGenerator.previous;
             if (p === undefined || p.sym === "LPAREN" || precedence.has(p.sym))
             {
-                cur_token.sym = "NEGATE";
+                t.sym = "NEGATE";
             }
         }
             
-        let sym = cur_token.sym;
+        let sym = t.sym;
         if (sym === "NUM" || sym === "ID") {
-            operandStack.push(new TreeNode(cur_token.sym, cur_token))
+            operandStack.push(new TreeNode(t.sym, t));
         }
         else {
             let assoc = associativity.get(sym);
@@ -36,24 +42,24 @@ export function parse(inputData: string): TreeNode {
                 if (operatorStack.length === 0) {
                     break;
                 }
-                let A = operatorStack.shift();
-                if (assoc === "left" && precedence.get(A.sym) >= precedence.get(sym)) {
-                    doOperation(operandStack, operatorStack);
+                let A = operatorStack[operatorStack.length - 1].sym;
+                if (assoc === "left" && precedence.get(A) >= precedence.get(sym)) {
+                    doOperation(operandStack, operatorStack, arity);
                 }
-                else if (assoc === "right" && precedence.get(A.sym) > precedence.get(sym)) {
-                    doOperation(operandStack, operatorStack);
+                else if (assoc === "right" && precedence.get(A) > precedence.get(sym)) {
+                    doOperation(operandStack, operatorStack, arity);
                 }
                 else {
                     break;
                 }
             }
-            operatorStack.push(new TreeNode(cur_token.sym, cur_token))              
+            operatorStack.push(new TreeNode(t.sym, t));              
         }
     }
     while (!(operatorStack.length === 0)) {
-        doOperation(operandStack, operatorStack);
-    } 
-    return undefined;
+        doOperation(operandStack, operatorStack, arity);
+    }
+    return operandStack.pop();
 }
 
 export class TreeNode {
@@ -64,19 +70,22 @@ export class TreeNode {
     {
         this.sym = symbol;
         this.token = token;
+        this.children = new Array<TreeNode>();
     }
-    add_child(node: TreeNode)
+    addChild(node: TreeNode)
     {
         this.children.push(node);
     }
 }
 
-function doOperation(operandStack: Array<TreeNode>, operatorStack: Array<TreeNode>)
+function doOperation(operandStack: Array<TreeNode>, operatorStack: Array<TreeNode>, arity: Map<string, number>)
 {
-    let c1 = operandStack.pop()
-    let c2 = operandStack.pop()
-    let opNode = operatorStack.pop()
-    opNode.add_child(c2)
-    opNode.add_child(c1)
-    operandStack.push(opNode)
+    let opNode = operatorStack.pop();
+    let c1 = operandStack.pop();
+    if (arity.get(opNode.sym) === 2) {
+        let c2 = operandStack.pop();
+        opNode.addChild(c2);
+    }   
+    opNode.addChild(c1);
+    operandStack.push(opNode);
 }

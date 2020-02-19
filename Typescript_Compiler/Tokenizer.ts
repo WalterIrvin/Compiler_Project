@@ -5,20 +5,21 @@ export class Tokenizer {
     inputData: string;
     lineNumber: number;
     idx: number;
+    previous: Token;  // reference to the previous token looked at
+    current: Token; // reference to the current token looked at
     constructor(grammar: Grammar) {
         this.grammar = grammar;
         this.lineNumber = 1;
         this.idx = 0;
         this.inputData = ""
-    }
-    previous(): Token {
-
-        return undefined;
+        this.previous = undefined;
+        this.current = undefined;
     }
     next(): Token {
         if (this.idx >= this.inputData.length - 1) {
             return new Token("$", undefined, this.lineNumber);
         }
+        this.previous = this.current; // function returns the next token, so the current token is the previous to that.
         for (let i = 0; i < this.grammar.m_terminals.length; i++) {
             let terminal = this.grammar.m_terminals[i];
             let sym = terminal.sym;
@@ -32,10 +33,10 @@ export class Tokenizer {
 
                 if (sym !== "WHITESPACE" && sym !== "COMMENT") {
                     //return new token using sym, lexeme, and line num
-                    let ret_token = new Token(terminal.sym, lexeme, this.lineNumber);
+                    this.current = new Token(terminal.sym, lexeme, this.lineNumber);
                     let lineSplitter = lexeme.split("\n");
                     this.lineNumber += lineSplitter.length - 1;
-                    return ret_token;
+                    return this.current;
                 }
                 else {
                     //skip whitespace and get next real token

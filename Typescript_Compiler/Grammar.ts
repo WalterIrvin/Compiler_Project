@@ -10,7 +10,7 @@ export class Grammar {
     constructor(inputStr: string, tokenOnlyFlag: boolean=false) {
         let terminal_section: Boolean = true;
         let varList = inputStr.split("\n");
-        for (let i = 0; i < varList.length - 1; i++) {
+        for (let i = 0; i < varList.length; i++) {
             if (terminal_section) {
                 let splitList = varList[i].split("->", 2);
                 let symbol = null;
@@ -25,7 +25,7 @@ export class Grammar {
                     }
                     this.m_terminals.push(term);
                     this.m_symbols.add(symbol);
-                    console.log(term.sym + " : " + term.rex);
+                    //console.log(term.sym + " : " + term.rex);
                 }
                 else {
                     if (!tokenOnlyFlag)

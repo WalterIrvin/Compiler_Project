@@ -2,6 +2,7 @@
 exports.__esModule = true;
 var Token = /** @class */ (function () {
     function Token(sym, lexeme, line) {
+        if (line === void 0) { line = 0; }
         this.sym = sym;
         this.lexeme = lexeme;
         this.line = line;
