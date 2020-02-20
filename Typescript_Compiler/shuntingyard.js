@@ -6,11 +6,11 @@ var fs = require("fs");
 function parse(inputData) {
     var data = fs.readFileSync("grammar.txt", "utf8");
     var precedence = new Map();
-    precedence.set("POWOP", 3).set("MULOP", 2).set("ADDOP", 1).set("NEGATE", 3).set("BITNOT", 3);
+    precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5);
     var associativity = new Map();
     associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right");
     var arity = new Map();
-    arity.set("func-call", 2).set("BITNOT", 1).set("NEGATE", 1).set("POWOP", 2).set("MULOP", 2).set("ADDOP", 2).set("ADDOP", 2).set("COMMA", 1);
+    arity.set("func-call", 2).set("BITNOT", 1).set("NEGATE", 1).set("POWOP", 2).set("MULOP", 2).set("ADDOP", 2).set("COMMA", 2);
     var inputGrammar = new Grammar_1.Grammar(data, true);
     var tokenGenerator = new Tokenizer_1.Tokenizer(inputGrammar);
     tokenGenerator.setInput(inputData);
@@ -28,32 +28,34 @@ function parse(inputData) {
                 t.sym = "NEGATE";
             }
         }
-        var sym = t.sym;
-        if (sym === "NUM" || sym === "ID") {
+        if (t.sym === "NUM" || t.sym === "ID") {
             operandStack.push(new TreeNode(t.sym, t));
         }
-        else if (sym === "LPAREN") {
+        else if (t.sym === "LPAREN") {
             //LPAREN special case, always push onto operator stack
             operatorStack.push(new TreeNode(t.sym, t));
         }
-        else if (sym === "RPAREN") {
+        else if (t.sym === "RPAREN") {
             //RPAREN special case, do op untill we encounter a LPAREN, then destroy the LPAREN
             while (operatorStack[operatorStack.length - 1].sym !== "LPAREN") {
                 doOperation(operandStack, operatorStack, arity);
             }
             operatorStack.pop();
         }
-        else {
-            var assoc = associativity.get(sym);
+        if (t.sym !== "NUM" && t.sym !== "ID" && t.sym !== "LPAREN" && t.sym !== "RPAREN") {
+            var assoc = associativity.get(t.sym);
             while (true) {
+                if (assoc === "right" && arity.get(t.sym) === 1) {
+                    break;
+                }
                 if (operatorStack.length === 0) {
                     break;
                 }
                 var A = operatorStack[operatorStack.length - 1].sym;
-                if (assoc === "left" && precedence.get(A) >= precedence.get(sym)) {
+                if (assoc === "left" && precedence.get(A) >= precedence.get(t.sym)) {
                     doOperation(operandStack, operatorStack, arity);
                 }
-                else if (assoc === "right" && precedence.get(A) > precedence.get(sym)) {
+                else if (assoc === "right" && precedence.get(A) > precedence.get(t.sym)) {
                     doOperation(operandStack, operatorStack, arity);
                 }
                 else {

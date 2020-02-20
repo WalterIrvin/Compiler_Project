@@ -1,11 +1,11 @@
 SEMI -> ;
-ID -> [A-Za-z]+\w
 NUM -> \d+
+ID -> \w+
 POWOP -> \*\*
 MULOP -> [*/]
 ADDOP -> [-+]
+NEGATE -> [-]
 LPAREN -> [(]
 RPAREN -> [)]
 BITNOT -> [~]
-NEGATE -> [-]
 COMMA -> [,]
