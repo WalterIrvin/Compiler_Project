@@ -6,7 +6,7 @@ let fs = require("fs");
 export function parse(inputData: string): TreeNode {
     let data: string = fs.readFileSync("grammar.txt", "utf8");
     let precedence: Map<string, number> = new Map<string, number>();
-    precedence.set("POWOP", 3).set("MULOP", 2).set("ADDOP", 1);
+    precedence.set("POWOP", 3).set("MULOP", 2).set("ADDOP", 1).set("NEGATE", 3).set("BITNOT", 3);
     let associativity: Map<string, string> = new Map<string, string>();
     associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right");
     let arity: Map<string, number> = new Map<string, number>();
@@ -31,15 +31,20 @@ export function parse(inputData: string): TreeNode {
                 t.sym = "NEGATE";
             }
         }
-            
         let sym = t.sym;
         if (sym === "NUM" || sym === "ID") {
             operandStack.push(new TreeNode(t.sym, t));
         }
         else if (sym === "LPAREN") {
-
+            //LPAREN special case, always push onto operator stack
+            operatorStack.push(new TreeNode(t.sym, t));
         }
         else if (sym === "RPAREN") {
+            //RPAREN special case, do op untill we encounter a LPAREN, then destroy the LPAREN
+            while (operatorStack[operatorStack.length - 1].sym !== "LPAREN") {
+                doOperation(operandStack, operatorStack, arity);
+            }
+            operatorStack.pop();
         }
         else {
             let assoc = associativity.get(sym);
