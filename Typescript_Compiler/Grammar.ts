@@ -44,6 +44,8 @@ export class Grammar {
             else {
                 // Non terminal section
                 let splitList = varList[i].split(" -> ", 2);
+                if (splitList.length != 2)
+                    continue;
                 let leftSide = splitList[0];
                 let alternation = splitList[1].split(" | "); // splits rhs into different | terms
                 let newProdArray = new Array<Array<string>>();
@@ -73,9 +75,10 @@ export class Grammar {
                     //Create new nonterminal
                     this.m_nonterminals.set(leftSide, newProdArray);
                 }
-                this.check_valid();
+                
             }
         }
+        //this.check_valid();
         
     }
 
@@ -128,5 +131,42 @@ export class Grammar {
                 });
             });
         }
+    }
+
+    getNullable() : Set<string>
+    {
+        let null_set: Set<string> = new Set<string>();
+        while (true) {  // repeat until it stabilizes
+            let flag: boolean = true;
+            this.m_nonterminals.forEach((productionList: string[][], N: string) => {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach((termList: string[]) => {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    if (termList.length === 1) {
+                        if (termList[0] === "lambda") {
+                            termList = new Array<string>();
+                        }
+                    }
+                    console.log(termList);
+                    let allNullable = termList.every((sym: string) => {
+                        return null_set.has(sym);
+                    });
+                    console.log(allNullable);
+                    if (allNullable) {
+                        if (!null_set.has(N)) {
+                            null_set.add(N);
+                            flag = false;
+                        }
+                    }
+                    
+                });
+            });
+            if (flag)
+            {
+                //If sets are the same between checking all nonterminals, then it has stabilized
+                break;
+            }
+        }
+        return null_set;
     }
 }

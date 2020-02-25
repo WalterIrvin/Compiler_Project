@@ -43,6 +43,8 @@ var Grammar = /** @class */ (function () {
             else {
                 // Non terminal section
                 var splitList = varList[i].split(" -> ", 2);
+                if (splitList.length != 2)
+                    return "continue";
                 var leftSide = splitList[0];
                 var alternation = splitList[1].split(" | "); // splits rhs into different | terms
                 var newProdArray_1 = new Array();
@@ -68,13 +70,13 @@ var Grammar = /** @class */ (function () {
                     //Create new nonterminal
                     this_1.m_nonterminals.set(leftSide, newProdArray_1);
                 }
-                this_1.check_valid();
             }
         };
         var this_1 = this;
         for (var i = 0; i < varList.length; i++) {
             _loop_1(i);
         }
+        this.check_valid();
     }
     Grammar.prototype.check_valid = function () {
         var _this = this;
@@ -119,6 +121,44 @@ var Grammar = /** @class */ (function () {
                 });
             });
         }
+    };
+    Grammar.prototype.getNullable = function () {
+        var null_set = new Set();
+        var _loop_2 = function () {
+            var flag = true;
+            this_2.m_nonterminals.forEach(function (productionList, N) {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach(function (termList) {
+                    //list of individual terms in a production     
+                    if (termList.length == 1) {
+                        if (termList[0] === "lambda") {
+                            termList = new Array();
+                        }
+                    }
+                    console.log(termList);
+                    var allNullable = termList.every(function (sym) {
+                        return null_set.has(sym);
+                    });
+                    console.log(allNullable);
+                    if (allNullable) {
+                        if (!null_set.has(N)) {
+                            null_set.add(N);
+                            flag = false;
+                        }
+                    }
+                });
+            });
+            if (flag) {
+                return "break";
+            }
+        };
+        var this_2 = this;
+        while (true) {
+            var state_1 = _loop_2();
+            if (state_1 === "break")
+                break;
+        }
+        return null_set;
     };
     return Grammar;
 }());
