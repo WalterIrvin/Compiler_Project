@@ -40,11 +40,11 @@ var Grammar = /** @class */ (function () {
             }
             else {
                 // Non terminal section
-                var splitList = varList[i].split(" -> ", 2);
+                var splitList = varList[i].split("->", 2);
                 if (splitList.length != 2)
                     return "continue";
-                var leftSide = splitList[0];
-                var alternation = splitList[1].split(" | "); // splits rhs into different | terms
+                var leftSide = splitList[0].trim();
+                var alternation = splitList[1].trim().split("|"); // splits rhs into different | terms
                 var newProdArray_1 = new Array();
                 alternation.forEach(function (production) {
                     var productionList = new Array();

@@ -41,11 +41,11 @@ export class Grammar {
             }
             else {
                 // Non terminal section
-                let splitList = varList[i].split(" -> ", 2);
+                let splitList = varList[i].split("->", 2);
                 if (splitList.length != 2)
                     continue;
-                let leftSide = splitList[0];
-                let alternation = splitList[1].split(" | "); // splits rhs into different | terms
+                let leftSide = splitList[0].trim();
+                let alternation = splitList[1].trim().split("|"); // splits rhs into different | terms
                 let newProdArray = new Array<Array<string>>();
                 
                 alternation.forEach((production: string) => {
