@@ -143,11 +143,9 @@ export class Grammar {
                             termList = new Array<string>();
                         }
                     }
-                    
                     let allNullable = termList.every((sym: string) => {
                         return null_set.has(sym);
                     });
-                    
                     if (allNullable) {
                         if (!null_set.has(N)) {
                             null_set.add(N);
