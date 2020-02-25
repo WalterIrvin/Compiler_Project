@@ -26,14 +26,12 @@ export class Grammar {
                     }
                     this.m_terminals.push(term);
                     this.m_symbols.add(symbol);
-                    //console.log(term.sym + " : " + term.rex);
                 }
                 else { // split len != 2
                     if (!tokenOnlyFlag)
                     {
                         if (varList[i].length === 0) {
                             terminal_section = false;
-                            console.log("Terminal section over");
                         }
                         else {
                             throw Error("Syntax error: " + varList[i] + " is invalid declaration");
@@ -78,16 +76,14 @@ export class Grammar {
                 
             }
         }
-        //this.check_valid();
+        this.check_valid();
         
     }
 
     check_valid()
     {
-        console.log(this.m_nonterminals);
         let neighborSet = new Set<string>();
         this.depth_first_search(this.m_nonterminalStart, neighborSet);
-        console.log(neighborSet);
 
         //nonterminal usage check
         this.m_nonterminals.forEach((value: string[][], symbol: string) => {
@@ -99,7 +95,7 @@ export class Grammar {
 
         //terminal usage check
         this.m_symbols.forEach((symbol: string) => {
-            if (!this.m_usedterminals.has(symbol))
+            if (!this.m_usedterminals.has(symbol) && symbol !== "COMMENT")
             {
                 throw Error("Error: this is an unused terminal: " + symbol);
             }
@@ -117,7 +113,7 @@ export class Grammar {
                 //Go through each production, which is a list of symbols representing terminals/nonterminals
                 production.forEach((symbol: string) => {
                     //Each symbol in a single production, will either be a terminal or nonterminal
-                    if (!this.m_symbols.has(symbol) && !this.m_nonterminals.has(symbol)) {
+                    if (!this.m_symbols.has(symbol) && !this.m_nonterminals.has(symbol) && symbol !== "lambda") {
                         throw Error("Error: symbol not defined: " + symbol);
                     }
                     else if (this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
@@ -147,11 +143,11 @@ export class Grammar {
                             termList = new Array<string>();
                         }
                     }
-                    console.log(termList);
+                    
                     let allNullable = termList.every((sym: string) => {
                         return null_set.has(sym);
                     });
-                    console.log(allNullable);
+                    
                     if (allNullable) {
                         if (!null_set.has(N)) {
                             null_set.add(N);

@@ -26,13 +26,11 @@ var Grammar = /** @class */ (function () {
                     }
                     this_1.m_terminals.push(term);
                     this_1.m_symbols.add(symbol);
-                    //console.log(term.sym + " : " + term.rex);
                 }
                 else { // split len != 2
                     if (!tokenOnlyFlag) {
                         if (varList[i].length === 0) {
                             terminal_section = false;
-                            console.log("Terminal section over");
                         }
                         else {
                             throw Error("Syntax error: " + varList[i] + " is invalid declaration");
@@ -80,10 +78,8 @@ var Grammar = /** @class */ (function () {
     }
     Grammar.prototype.check_valid = function () {
         var _this = this;
-        console.log(this.m_nonterminals);
         var neighborSet = new Set();
         this.depth_first_search(this.m_nonterminalStart, neighborSet);
-        console.log(neighborSet);
         //nonterminal usage check
         this.m_nonterminals.forEach(function (value, symbol) {
             if (!neighborSet.has(symbol)) {
@@ -92,7 +88,7 @@ var Grammar = /** @class */ (function () {
         });
         //terminal usage check
         this.m_symbols.forEach(function (symbol) {
-            if (!_this.m_usedterminals.has(symbol)) {
+            if (!_this.m_usedterminals.has(symbol) && symbol !== "COMMENT") {
                 throw Error("Error: this is an unused terminal: " + symbol);
             }
         });
@@ -107,7 +103,7 @@ var Grammar = /** @class */ (function () {
                 //Go through each production, which is a list of symbols representing terminals/nonterminals
                 production.forEach(function (symbol) {
                     //Each symbol in a single production, will either be a terminal or nonterminal
-                    if (!_this.m_symbols.has(symbol) && !_this.m_nonterminals.has(symbol)) {
+                    if (!_this.m_symbols.has(symbol) && !_this.m_nonterminals.has(symbol) && symbol !== "lambda") {
                         throw Error("Error: symbol not defined: " + symbol);
                     }
                     else if (_this.m_nonterminals.has(symbol) && !neighborSet.has(symbol)) {
@@ -129,17 +125,15 @@ var Grammar = /** @class */ (function () {
             this_2.m_nonterminals.forEach(function (productionList, N) {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach(function (termList) {
-                    //list of individual terms in a production     
-                    if (termList.length == 1) {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    if (termList.length === 1) {
                         if (termList[0] === "lambda") {
                             termList = new Array();
                         }
                     }
-                    console.log(termList);
                     var allNullable = termList.every(function (sym) {
                         return null_set.has(sym);
                     });
-                    console.log(allNullable);
                     if (allNullable) {
                         if (!null_set.has(N)) {
                             null_set.add(N);
