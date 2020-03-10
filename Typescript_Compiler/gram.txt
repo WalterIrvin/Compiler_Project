@@ -1,7 +1,7 @@
 grammar gram;
 SEMI : ';';
 WHITESPACE : ( ' ' | '\t' | '\n' | '\r' )+ -> skip   ;
-COMMENT : '//' ~[\n]*;
+COMMENT : ('//' (~[\n])* | '/*' .*? '*/') -> skip;
 WHILE : 'while';
 LP : [(];
 RP : [)];
@@ -22,7 +22,7 @@ MULOP : [*/%];
 MINUS : '-';
 CMA : ',';
 TYPE : ('int'|'string'|'double');
-STRING_CONSTANT : '"(\\"|\\n|\\\\|[^"])*"';
+STRING_CONSTANT : '"' ( '\\"' | ~["] )* '"';
 PRINT : 'print';
 INPUT : 'input';
 OPEN : 'open';
@@ -31,6 +31,7 @@ WRITE : 'write';
 CLOSE : 'close';
 ID : [A-Za-z_][A-Za-z_0-9]*;
 
+start: program;
 program : var_decl_list braceblock;
 stmts : stmt stmts | ;
 stmt : cond | loop | return_stmt SEMI | assign SEMI | func_call SEMI;
