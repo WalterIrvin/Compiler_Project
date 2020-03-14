@@ -37,6 +37,7 @@
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="exetools.ts" />
     <TypeScriptCompile Include="shuntingyard.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
