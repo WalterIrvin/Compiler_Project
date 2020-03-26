@@ -154,6 +154,43 @@ var Grammar = /** @class */ (function () {
         }
         return null_set;
     };
+    Grammar.prototype.getFirst = function () {
+        var null_set = this.getNullable();
+        var first = new Map();
+        var _loop_3 = function () {
+            var flag = true;
+            this_3.m_nonterminals.forEach(function (productionList, N) {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach(function (P) {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    for (var i = 0; i < P.length; i++) {
+                        var x = P[i];
+                        console.log(x);
+                        if (first.get(N) !== undefined) {
+                            first.get(N).add(x);
+                        }
+                        else {
+                            first.set(N, new Set(x));
+                        }
+                        if (!null_set.has(x) && x !== "lambda") {
+                            break;
+                        }
+                        flag = false;
+                    }
+                });
+            });
+            if (flag) {
+                return "break";
+            }
+        };
+        var this_3 = this;
+        while (true) {
+            var state_2 = _loop_3();
+            if (state_2 === "break")
+                break;
+        }
+        return first;
+    };
     return Grammar;
 }());
 exports.Grammar = Grammar;

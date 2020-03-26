@@ -163,4 +163,37 @@ export class Grammar {
         }
         return null_set;
     }
+
+    getFirst(): Map<string, Set<string>> {
+        let null_set = this.getNullable();
+        let first: Map<string, Set<string>> = new Map<string, Set<string>>();
+        while (true) {  // repeat until it stabilizes
+            let flag: boolean = true;
+            this.m_nonterminals.forEach((productionList: string[][], N: string) => {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach((P: string[]) => {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    for (var i = 0; i < P.length; i++) {
+                        let x = P[i];
+                        console.log(x);
+                        if (first.get(N) !== undefined) {
+                            first.get(N).add(x);
+                        }
+                        else {
+                            first.set(N, new Set<string>(x));
+                        }
+                        if (!null_set.has(x) && x !== "lambda") {
+                            break;
+                        }
+                        flag = false;
+                    }
+                });
+            });
+            if (flag) {
+                //If sets are the same between checking all nonterminals, then it has stabilized
+                break;
+            }
+        }
+        return first;
+    }
 }
