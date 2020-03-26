@@ -24,9 +24,9 @@ export function parse(txt: string) : string
     let antlr_root = parser.start();
     //convert antlr tree to custom format
     let root: TreeNode = walk(parser, antlr_root);
-    programNodeCode(root);
-    // ASM GENERATOR SECTION
-    return "null";
+    //Generate asm from the parse tree
+    let asm = makeAsm(root);
+    return asm;
 }
 
 function walk(parser: any, node: any) : TreeNode
@@ -58,6 +58,26 @@ function walk(parser: any, node: any) : TreeNode
     return null;
 }
 
+let labelCounter = 0;
+function label() {
+    let s = "lbl" + labelCounter;
+    labelCounter++;
+    return s;
+}
+
+function makeAsm(root: TreeNode) {
+    asmCode = [];
+    labelCounter = 0;
+    emit("default rel");
+    emit("section .text");
+    emit("global main");
+    emit("main:");
+    programNodeCode(root);
+    emit("ret");
+    emit("section .data");
+    return asmCode.join("\n");
+}
+
 function programNodeCode(n: TreeNode) {
     //program -> braceblock
     if (n.sym != "program")
@@ -83,13 +103,50 @@ function stmtNodeCode(n: TreeNode) {
     let c = n.children[0];
     switch (c.sym) {
         case "cond":
-            condNodeCode(c); break;
+            condNodeCode(c); 
+            break;
         case "loop":
-            loopNodeCode(c); break;
+            loopNodeCode(c);
+            break;
         case "return-stmt":
-            returnstmtNodeCode(c); break;
+            returnstmtNodeCode(c);
+            break;
         default:
             ICE();
+    }
+}
+
+function returnstmtNodeCode(n: TreeNode) {
+    //return-stmt -> RETURN expr
+    exprNodeCode(n.children[1]);
+    //...move result from expr to rax...
+    emit("ret");
+}
+
+function exprNodeCode(n: TreeNode) {
+    //expr -> NUM
+    let d = parseInt(n.children[0].token.lexeme, 10);
+    emit(`mov rax, ${d}`);
+}
+
+function loopNodeCode(n: TreeNode) {
+
+}
+
+function condNodeCode(n: TreeNode) {
+    //cond -> IF LP expr RP braceblock |
+    //  IF LP expr RP braceblock ELSE braceblock
+
+    if (n.children.length === 5) {
+        //no 'else'
+        exprNodeCode(n.children[2]);    //leaves result in rax
+        emit("cmp rax, 0");
+        var endifLabel = label();
+        emit(`je ${endifLabel}`);
+        braceblockNodeCode(n.children[4]);
+        emit(`${endifLabel}:`);
+    } else {
+        //...fill this in...
     }
 }
 
