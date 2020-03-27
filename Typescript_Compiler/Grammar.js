@@ -155,40 +155,57 @@ var Grammar = /** @class */ (function () {
         return null_set;
     };
     Grammar.prototype.getFirst = function () {
+        var _this = this;
+        //Pre-init section
         var null_set = this.getNullable();
         var first = new Map();
-        var _loop_3 = function () {
-            var flag = true;
-            this_3.m_nonterminals.forEach(function (productionList, N) {
+        this.m_nonterminals.forEach(function (prodlist, N) {
+            first.set(N, new Set());
+        });
+        this.m_terminals.forEach(function (term) {
+            first.set(term.sym, new Set());
+            first.get(term.sym).add(term.sym);
+        });
+        first["delete"]("WHITESPACE"); // ignore whitespace
+        //console.log("----BEFORE-----");
+        //console.log(first);
+        //console.log("----LOOP-------");
+        var flag = true;
+        //Normal section
+        while (flag) { // repeat until it stabilizes
+            flag = false;
+            this.m_nonterminals.forEach(function (productionList, N) {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach(function (P) {
                     //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
-                    for (var i = 0; i < P.length; i++) {
-                        var x = P[i];
-                        console.log(x);
-                        if (first.get(N) !== undefined) {
-                            first.get(N).add(x);
-                        }
-                        else {
-                            first.set(N, new Set(x));
+                    P.every(function (x) {
+                        if (!first.get(N).has(x) && x !== "lambda") {
+                            if (_this.m_nonterminals.has(x)) {
+                                //Case 1: X is a non-terminal, union the two sets together
+                                first.get(x).forEach(function (sym) {
+                                    if (!first.get(N).has(sym)) {
+                                        flag = true;
+                                        first.get(N).add(sym);
+                                    }
+                                });
+                            }
+                            else {
+                                //Case 2: x is a terminal, add it to first
+                                first.get(N).add(x);
+                                flag = true;
+                            }
                         }
                         if (!null_set.has(x) && x !== "lambda") {
-                            break;
+                            return true;
                         }
-                        flag = false;
-                    }
+                        return true;
+                    });
                 });
             });
-            if (flag) {
-                return "break";
-            }
-        };
-        var this_3 = this;
-        while (true) {
-            var state_2 = _loop_3();
-            if (state_2 === "break")
-                break;
         }
+        //console.log("------AFTER-----");
+        //console.log(first);
+        //console.log("------LOOP------");
         return first;
     };
     return Grammar;

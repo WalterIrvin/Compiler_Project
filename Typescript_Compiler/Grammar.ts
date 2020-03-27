@@ -165,35 +165,56 @@ export class Grammar {
     }
 
     getFirst(): Map<string, Set<string>> {
+        //Pre-init section
         let null_set = this.getNullable();
         let first: Map<string, Set<string>> = new Map<string, Set<string>>();
-        while (true) {  // repeat until it stabilizes
-            let flag: boolean = true;
+        this.m_nonterminals.forEach((prodlist: string[][], N: string) => {
+            first.set(N, new Set<string>());
+        });
+        this.m_terminals.forEach((term: Terminal) => {
+            first.set(term.sym, new Set<string>());
+            first.get(term.sym).add(term.sym);
+        });
+        first.delete("WHITESPACE"); // ignore whitespace
+        //console.log("----BEFORE-----");
+        //console.log(first);
+        //console.log("----LOOP-------");
+        let flag: boolean = true;
+        //Normal section
+        while (flag) {  // repeat until it stabilizes
+            flag = false;
             this.m_nonterminals.forEach((productionList: string[][], N: string) => {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach((P: string[]) => {
                     //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
-                    for (var i = 0; i < P.length; i++) {
-                        let x = P[i];
-                        console.log(x);
-                        if (first.get(N) !== undefined) {
-                            first.get(N).add(x);
-                        }
-                        else {
-                            first.set(N, new Set<string>(x));
+                    P.every((x: string) => {
+                        if (!first.get(N).has(x) && x !== "lambda") {
+                            if (this.m_nonterminals.has(x)) {
+                                //Case 1: X is a non-terminal, union the two sets together
+                                first.get(x).forEach((sym: string) => {
+                                    if (!first.get(N).has(sym)){
+                                        flag = true;
+                                        first.get(N).add(sym);
+                                    }
+                                });
+                            }
+                            else {
+                                //Case 2: x is a terminal, add it to first
+                                first.get(N).add(x);
+                                flag = true;
+                            }
                         }
                         if (!null_set.has(x) && x !== "lambda") {
-                            break;
+                            return true;
                         }
-                        flag = false;
-                    }
+                        return true;
+                    });
                 });
             });
-            if (flag) {
-                //If sets are the same between checking all nonterminals, then it has stabilized
-                break;
-            }
         }
+        //console.log("------AFTER-----");
+        //console.log(first);
+        //console.log("------LOOP------");
         return first;
     }
 }
