@@ -155,7 +155,6 @@ var Grammar = /** @class */ (function () {
         return null_set;
     };
     Grammar.prototype.getFirst = function () {
-        var _this = this;
         //Pre-init section
         var null_set = this.getNullable();
         var first = new Map();
@@ -178,27 +177,21 @@ var Grammar = /** @class */ (function () {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach(function (P) {
                     //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
-                    P.every(function (x) {
-                        if (!first.get(N).has(x) && x !== "lambda") {
-                            if (_this.m_nonterminals.has(x)) {
-                                //Case 1: X is a non-terminal, union the two sets together
-                                first.get(x).forEach(function (sym) {
-                                    if (!first.get(N).has(sym)) {
-                                        flag = true;
-                                        first.get(N).add(sym);
-                                    }
-                                });
-                            }
-                            else {
-                                //Case 2: x is a terminal, add it to first
-                                first.get(N).add(x);
-                                flag = true;
-                            }
+                    P.every(function (sym) {
+                        if (sym !== "lambda") {
+                            first.get(sym).forEach(function (x) {
+                                if (!first.get(N).has(x)) {
+                                    first.get(N).add(x);
+                                    flag = true;
+                                }
+                            });
                         }
-                        if (!null_set.has(x) && x !== "lambda") {
+                        if (null_set.has(sym)) {
                             return true;
                         }
-                        return true;
+                        else {
+                            return false;
+                        }
                     });
                 });
             });

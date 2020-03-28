@@ -187,27 +187,20 @@ export class Grammar {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach((P: string[]) => {
                     //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
-                    P.every((x: string) => {
-                        if (!first.get(N).has(x) && x !== "lambda") {
-                            if (this.m_nonterminals.has(x)) {
-                                //Case 1: X is a non-terminal, union the two sets together
-                                first.get(x).forEach((sym: string) => {
-                                    if (!first.get(N).has(sym)){
-                                        flag = true;
-                                        first.get(N).add(sym);
-                                    }
-                                });
-                            }
-                            else {
-                                //Case 2: x is a terminal, add it to first
-                                first.get(N).add(x);
-                                flag = true;
-                            }
+                    P.every((sym: string) => {
+                        if (sym !== "lambda") {
+                            first.get(sym).forEach((x: string) => {
+                                if (!first.get(N).has(x)) {
+                                    first.get(N).add(x);
+                                    flag = true;
+                                }
+                            });
                         }
-                        if (!null_set.has(x) && x !== "lambda") {
+                        if (null_set.has(sym)) {
                             return true;
+                        } else {
+                            return false;
                         }
-                        return true;
                     });
                 });
             });
