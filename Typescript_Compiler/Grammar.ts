@@ -210,4 +210,63 @@ export class Grammar {
         //console.log("------LOOP------");
         return first;
     }
+
+    getFollow(): Map<string, Set<string>> {
+        let null_set = this.getNullable();
+        let first = this.getFirst();
+        let follow = new Map<string, Set<string>>();
+        this.m_nonterminals.forEach((prodlist: string[][], N: string) => {
+            follow.set(N, new Set<string>());
+        });
+        this.m_terminals.forEach((term: Terminal) => {
+            follow.set(term.sym, new Set<string>());
+            follow.get(term.sym).add(term.sym);
+        });
+        follow.delete("WHITESPACE"); // ignore whitespace
+        //follow.set("start", new Set<string>("$"));
+        let flag = true;
+        while (flag) {
+            flag = false;
+            this.m_nonterminals.forEach((productionList: string[][], N: string) => {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach((P: string[]) => {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    let broke_loop = false;
+                    for (let i = 0; i < P.length; i++) {
+                        let sym = P[i];
+                        if (this.m_nonterminals.has(sym)) {
+                            for (let y = i + 1; y < P.length; y++) {
+                                let y_sym = P[y];
+                                //union(follow[x], first[y])
+                                first.get(y_sym).forEach((y_str: string) => {
+                                    //check for each string in first[y], if it isn't in follow[x] then add it to the set
+                                    if (!follow.get(sym).has(y_str)) {
+                                        follow.get(sym).add(y_str);
+                                        flag = true;
+                                    }
+                                });
+                                if (!null_set.has(y_sym)) {
+                                    //If y is not nullable, break loop
+                                    broke_loop = true;
+                                    break;
+                                }
+                            }
+                            if (!broke_loop) {
+                                //If we didn't break from loop, union follow[x] and follow[N] together.
+                                //What this means is that follow[x] currently has no non-nullable items in it, and such can be unioned.
+                                //union(follow[N], follow[x])
+                                follow.get(sym).forEach((x: string) => {
+                                    if (!follow.get(N).has(x)) {
+                                        follow.get(N).add(x);
+                                        flag = true;
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        return follow;
+    }
 }

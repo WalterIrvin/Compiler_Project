@@ -201,6 +201,68 @@ var Grammar = /** @class */ (function () {
         //console.log("------LOOP------");
         return first;
     };
+    Grammar.prototype.getFollow = function () {
+        var _this = this;
+        var null_set = this.getNullable();
+        var first = this.getFirst();
+        var follow = new Map();
+        this.m_nonterminals.forEach(function (prodlist, N) {
+            follow.set(N, new Set());
+        });
+        this.m_terminals.forEach(function (term) {
+            follow.set(term.sym, new Set());
+            follow.get(term.sym).add(term.sym);
+        });
+        follow["delete"]("WHITESPACE"); // ignore whitespace
+        //follow.set("start", new Set<string>("$"));
+        var flag = true;
+        while (flag) {
+            flag = false;
+            this.m_nonterminals.forEach(function (productionList, N) {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach(function (P) {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    var broke_loop = false;
+                    var _loop_3 = function (i) {
+                        var sym = P[i];
+                        if (_this.m_nonterminals.has(sym)) {
+                            for (var y = i + 1; y < P.length; y++) {
+                                var y_sym = P[y];
+                                //union(follow[x], first[y])
+                                first.get(y_sym).forEach(function (y_str) {
+                                    //check for each string in first[y], if it isn't in follow[x] then add it to the set
+                                    if (!follow.get(sym).has(y_str)) {
+                                        follow.get(sym).add(y_str);
+                                        flag = true;
+                                    }
+                                });
+                                if (!null_set.has(y_sym)) {
+                                    //If y is not nullable, break loop
+                                    broke_loop = true;
+                                    break;
+                                }
+                            }
+                            if (!broke_loop) {
+                                //If we didn't break from loop, union follow[x] and follow[N] together.
+                                //What this means is that follow[x] currently has no non-nullable items in it, and such can be unioned.
+                                //union(follow[N], follow[x])
+                                follow.get(sym).forEach(function (x) {
+                                    if (!follow.get(N).has(x)) {
+                                        follow.get(N).add(x);
+                                        flag = true;
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    for (var i = 0; i < P.length; i++) {
+                        _loop_3(i);
+                    }
+                });
+            });
+        }
+        return follow;
+    };
     return Grammar;
 }());
 exports.Grammar = Grammar;
