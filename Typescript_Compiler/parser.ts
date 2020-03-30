@@ -25,9 +25,8 @@ export function parse(txt: string) : string
     //convert antlr tree to custom format
     let root: TreeNode = walk(parser, antlr_root);
     //Generate asm from the parse tree
-    //let asm = makeAsm(root);
-    //return asm;
-    return null;
+    let asm = makeAsm(root.children[0]); // should get program
+    return asm;
 }
 
 function walk(parser: any, node: any) : TreeNode
@@ -81,7 +80,7 @@ function makeAsm(root: TreeNode) {
 
 function programNodeCode(n: TreeNode) {
     //program -> braceblock
-    if (n.sym != "program")
+    if (n.sym !== "program")
         ICE();
     braceblockNodeCode(n.children[0]);
 }
@@ -109,7 +108,7 @@ function stmtNodeCode(n: TreeNode) {
         case "loop":
             loopNodeCode(c);
             break;
-        case "return-stmt":
+        case "return_stmt":
             returnstmtNodeCode(c);
             break;
         default:
@@ -120,7 +119,6 @@ function stmtNodeCode(n: TreeNode) {
 function returnstmtNodeCode(n: TreeNode) {
     //return-stmt -> RETURN expr
     exprNodeCode(n.children[1]);
-    //...move result from expr to rax...
     emit("ret");
 }
 
@@ -131,7 +129,20 @@ function exprNodeCode(n: TreeNode) {
 }
 
 function loopNodeCode(n: TreeNode) {
-
+    // loop -> WHILE LP expr RP braceblock;
+    var startLoopLabel = label();
+    var endLoopLabel = label();
+    emit(`${startLoopLabel}:`);
+    emit("; While Section");
+    exprNodeCode(n.children[2]);    //leaves result in rax
+    emit("cmp rax, 0");
+    emit("; break out of loop if cond is false");
+    emit(`je ${endLoopLabel}`);  //break out of loop if condition is false
+    braceblockNodeCode(n.children[4]);
+    emit("; Return to top of loop");
+    emit(`jmp ${startLoopLabel}`);
+    emit("; End loop section");
+    emit(`${endLoopLabel}:`);
 }
 
 function condNodeCode(n: TreeNode) {
@@ -147,7 +158,19 @@ function condNodeCode(n: TreeNode) {
         braceblockNodeCode(n.children[4]);
         emit(`${endifLabel}:`);
     } else {
-        //...fill this in...
+        exprNodeCode(n.children[2]);    //leaves result in rax
+        emit("cmp rax, 0");
+        var elseLabel = label(); // if cmp fails, we go to else
+        var endCondLabel = label(); // if cmp succeeds, we skip else
+        emit(`je ${elseLabel}`);
+        emit("; If section");
+        braceblockNodeCode(n.children[4]);
+        emit(`jmp ${endCondLabel}`);
+        emit(`${elseLabel}:`);
+        emit("; Else section");
+        braceblockNodeCode(n.children[6]);
+        emit(`${endCondLabel}:`);
+        emit("; End cond");
     }
 }
 
@@ -158,7 +181,7 @@ function emit(instr: string) {
 
 function ICE() {
     //Internal compiler error
-    throw new Error("Oof");
+    throw new Error("Error");
 }
 class ErrorHandler
 {

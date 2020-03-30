@@ -23,9 +23,8 @@ function parse(txt) {
     //convert antlr tree to custom format
     var root = walk(parser, antlr_root);
     //Generate asm from the parse tree
-    //let asm = makeAsm(root);
-    //return asm;
-    return null;
+    var asm = makeAsm(root.children[0]); // should get program
+    return asm;
 }
 exports.parse = parse;
 function walk(parser, node) {
@@ -73,7 +72,7 @@ function makeAsm(root) {
 }
 function programNodeCode(n) {
     //program -> braceblock
-    if (n.sym != "program")
+    if (n.sym !== "program")
         ICE();
     braceblockNodeCode(n.children[0]);
 }
@@ -98,7 +97,7 @@ function stmtNodeCode(n) {
         case "loop":
             loopNodeCode(c);
             break;
-        case "return-stmt":
+        case "return_stmt":
             returnstmtNodeCode(c);
             break;
         default:
@@ -108,7 +107,6 @@ function stmtNodeCode(n) {
 function returnstmtNodeCode(n) {
     //return-stmt -> RETURN expr
     exprNodeCode(n.children[1]);
-    //...move result from expr to rax...
     emit("ret");
 }
 function exprNodeCode(n) {
@@ -117,6 +115,20 @@ function exprNodeCode(n) {
     emit("mov rax, " + d);
 }
 function loopNodeCode(n) {
+    // loop -> WHILE LP expr RP braceblock;
+    var startLoopLabel = label();
+    var endLoopLabel = label();
+    emit(startLoopLabel + ":");
+    emit("; While Section");
+    exprNodeCode(n.children[2]); //leaves result in rax
+    emit("cmp rax, 0");
+    emit("; break out of loop if cond is false");
+    emit("je " + endLoopLabel); //break out of loop if condition is false
+    braceblockNodeCode(n.children[4]);
+    emit("; Return to top of loop");
+    emit("jmp " + startLoopLabel);
+    emit("; End loop section");
+    emit(endLoopLabel + ":");
 }
 function condNodeCode(n) {
     //cond -> IF LP expr RP braceblock |
@@ -131,7 +143,19 @@ function condNodeCode(n) {
         emit(endifLabel + ":");
     }
     else {
-        //...fill this in...
+        exprNodeCode(n.children[2]); //leaves result in rax
+        emit("cmp rax, 0");
+        var elseLabel = label(); // if cmp fails, we go to else
+        var endCondLabel = label(); // if cmp succeeds, we skip else
+        emit("je " + elseLabel);
+        emit("; If section");
+        braceblockNodeCode(n.children[4]);
+        emit("jmp " + endCondLabel);
+        emit(elseLabel + ":");
+        emit("; Else section");
+        braceblockNodeCode(n.children[6]);
+        emit(endCondLabel + ":");
+        emit("; End cond");
     }
 }
 function emit(instr) {
@@ -140,7 +164,7 @@ function emit(instr) {
 }
 function ICE() {
     //Internal compiler error
-    throw new Error("Oof");
+    throw new Error("Error");
 }
 var ErrorHandler = /** @class */ (function () {
     function ErrorHandler() {

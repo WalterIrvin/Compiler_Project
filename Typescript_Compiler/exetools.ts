@@ -6,7 +6,9 @@ let fs = require("fs");
 //VS2019
 //need to install Build Tools for VS 2019 in the VS installer.
 //https://stackoverflow.com/questions/55097222/vcvarsall-bat-for-visual-studio-2019
-const VSBAT="c:\\program files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
+//const VSBAT="c:\\program files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
+//custom path
+const VSBAT = "D:\\ProgramData\\VisualStudio\\VC\\Auxiliary\\Build\\vcvars64.bat"
 
 //vs2017
 //const VSSHELL="c:\\program files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
