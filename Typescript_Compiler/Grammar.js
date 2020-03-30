@@ -8,6 +8,7 @@ var Grammar = /** @class */ (function () {
         this.m_symbols = new Set();
         this.m_nonterminals = new Map();
         this.m_usedterminals = new Set();
+        this.m_startVar = null;
         var terminal_section = true;
         var varList = inputStr.split("\n");
         this.m_terminals.push(new Terminal_1.Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
@@ -44,6 +45,10 @@ var Grammar = /** @class */ (function () {
                 if (splitList.length != 2)
                     return "continue";
                 var leftSide = splitList[0];
+                if (this_1.m_startVar === null) {
+                    //Sets the name of the start variable
+                    this_1.m_startVar = leftSide;
+                }
                 var alternation = splitList[1].split(" | "); // splits rhs into different | terms
                 var newProdArray_1 = new Array();
                 alternation.forEach(function (production) {
@@ -209,21 +214,16 @@ var Grammar = /** @class */ (function () {
         this.m_nonterminals.forEach(function (prodlist, N) {
             follow.set(N, new Set());
         });
-        this.m_terminals.forEach(function (term) {
-            follow.set(term.sym, new Set());
-            follow.get(term.sym).add(term.sym);
-        });
         follow["delete"]("WHITESPACE"); // ignore whitespace
-        //follow.set("start", new Set<string>("$"));
+        follow.set(this.m_startVar, new Set("$"));
         var flag = true;
         while (flag) {
             flag = false;
             this.m_nonterminals.forEach(function (productionList, N) {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach(function (P) {
-                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
-                    var broke_loop = false;
                     var _loop_3 = function (i) {
+                        var broke_loop = false;
                         var sym = P[i];
                         if (_this.m_nonterminals.has(sym)) {
                             for (var y = i + 1; y < P.length; y++) {
@@ -246,15 +246,16 @@ var Grammar = /** @class */ (function () {
                                 //If we didn't break from loop, union follow[x] and follow[N] together.
                                 //What this means is that follow[x] currently has no non-nullable items in it, and such can be unioned.
                                 //union(follow[N], follow[x])
-                                follow.get(sym).forEach(function (x) {
-                                    if (!follow.get(N).has(x)) {
-                                        follow.get(N).add(x);
+                                follow.get(N).forEach(function (x) {
+                                    if (!follow.get(sym).has(x)) {
+                                        follow.get(sym).add(x);
                                         flag = true;
                                     }
                                 });
                             }
                         }
                     };
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]    
                     for (var i = 0; i < P.length; i++) {
                         _loop_3(i);
                     }

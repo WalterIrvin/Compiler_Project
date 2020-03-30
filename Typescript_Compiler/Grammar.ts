@@ -6,6 +6,7 @@ export class Grammar {
     m_nonterminals: Map<string, Array<Array<string>>> = new Map<string, Array<Array<string>>>();
     m_nonterminalStart: string;
     m_usedterminals: Set<string> = new Set<string>();
+    m_startVar: string = null;
 
     constructor(inputStr: string, tokenOnlyFlag: boolean=false) {
         let terminal_section: Boolean = true;
@@ -45,6 +46,10 @@ export class Grammar {
                 if (splitList.length != 2)
                     continue;
                 let leftSide = splitList[0];
+                if (this.m_startVar === null) {
+                    //Sets the name of the start variable
+                    this.m_startVar = leftSide;
+                }
                 let alternation = splitList[1].split(" | "); // splits rhs into different | terms
                 let newProdArray = new Array<Array<string>>();
                 
@@ -218,21 +223,17 @@ export class Grammar {
         this.m_nonterminals.forEach((prodlist: string[][], N: string) => {
             follow.set(N, new Set<string>());
         });
-        this.m_terminals.forEach((term: Terminal) => {
-            follow.set(term.sym, new Set<string>());
-            follow.get(term.sym).add(term.sym);
-        });
         follow.delete("WHITESPACE"); // ignore whitespace
-        //follow.set("start", new Set<string>("$"));
+        follow.set(this.m_startVar, new Set<string>("$"));
         let flag = true;
         while (flag) {
             flag = false;
             this.m_nonterminals.forEach((productionList: string[][], N: string) => {
                 //production list is the entire production list, with possibly multiple production lists
                 productionList.forEach((P: string[]) => {
-                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
-                    let broke_loop = false;
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]    
                     for (let i = 0; i < P.length; i++) {
+                        let broke_loop = false;
                         let sym = P[i];
                         if (this.m_nonterminals.has(sym)) {
                             for (let y = i + 1; y < P.length; y++) {
@@ -255,9 +256,9 @@ export class Grammar {
                                 //If we didn't break from loop, union follow[x] and follow[N] together.
                                 //What this means is that follow[x] currently has no non-nullable items in it, and such can be unioned.
                                 //union(follow[N], follow[x])
-                                follow.get(sym).forEach((x: string) => {
-                                    if (!follow.get(N).has(x)) {
-                                        follow.get(N).add(x);
+                                follow.get(N).forEach((x: string) => {
+                                    if (!follow.get(sym).has(x)) {
+                                        follow.get(sym).add(x);
                                         flag = true;
                                     }
                                 });
