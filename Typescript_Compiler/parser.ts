@@ -25,8 +25,9 @@ export function parse(txt: string) : string
     //convert antlr tree to custom format
     let root: TreeNode = walk(parser, antlr_root);
     //Generate asm from the parse tree
-    let asm = makeAsm(root);
-    return asm;
+    //let asm = makeAsm(root);
+    //return asm;
+    return null;
 }
 
 function walk(parser: any, node: any) : TreeNode

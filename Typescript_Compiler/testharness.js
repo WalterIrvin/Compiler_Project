@@ -46,6 +46,7 @@ function fmt(i) {
 }
 //like the Unix (tm) nl utility: Number Lines
 function nl(x) {
+    x = x.replace(/\r\n/g, "\n");
     var tmp = x.split("\n");
     for (var i = 1; i <= tmp.length; ++i) {
         var txt = /(.*?)\s*$/.exec(tmp[i - 1])[1];
@@ -394,6 +395,7 @@ function runOneTestcase() {
 function main() {
     var inputfile = "inputs.json";
     var indata = fs.readFileSync(inputfile, "utf8");
+    indata = indata.replace(/\r\n/g, "\n");
     indata = indata.replace(/''((.|\n)*?)''/g, function (x) {
         x = x.substr(3);
         x = x.substr(0, x.length - 3);

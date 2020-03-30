@@ -23,8 +23,9 @@ function parse(txt) {
     //convert antlr tree to custom format
     var root = walk(parser, antlr_root);
     //Generate asm from the parse tree
-    var asm = makeAsm(root);
-    return asm;
+    //let asm = makeAsm(root);
+    //return asm;
+    return null;
 }
 exports.parse = parse;
 function walk(parser, node) {

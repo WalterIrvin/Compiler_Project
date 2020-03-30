@@ -8,6 +8,7 @@ var Grammar = /** @class */ (function () {
         this.m_symbols = new Set();
         this.m_nonterminals = new Map();
         this.m_usedterminals = new Set();
+        this.m_startVar = null;
         var terminal_section = true;
         var varList = inputStr.split("\n");
         this.m_terminals.push(new Terminal_1.Terminal("WHITESPACE", new RegExp("\\s+", "gy")));
@@ -40,11 +41,15 @@ var Grammar = /** @class */ (function () {
             }
             else {
                 // Non terminal section
-                var splitList = varList[i].split("->", 2);
+                var splitList = varList[i].split(" -> ", 2);
                 if (splitList.length != 2)
                     return "continue";
-                var leftSide = splitList[0].trim();
-                var alternation = splitList[1].trim().split("|"); // splits rhs into different | terms
+                var leftSide = splitList[0];
+                if (this_1.m_startVar === null) {
+                    //Sets the name of the start variable
+                    this_1.m_startVar = leftSide;
+                }
+                var alternation = splitList[1].split(" | "); // splits rhs into different | terms
                 var newProdArray_1 = new Array();
                 alternation.forEach(function (production) {
                     var productionList = new Array();
@@ -153,6 +158,111 @@ var Grammar = /** @class */ (function () {
                 break;
         }
         return null_set;
+    };
+    Grammar.prototype.getFirst = function () {
+        //Pre-init section
+        var null_set = this.getNullable();
+        var first = new Map();
+        this.m_nonterminals.forEach(function (prodlist, N) {
+            first.set(N, new Set());
+        });
+        this.m_terminals.forEach(function (term) {
+            first.set(term.sym, new Set());
+            first.get(term.sym).add(term.sym);
+        });
+        first["delete"]("WHITESPACE"); // ignore whitespace
+        //console.log("----BEFORE-----");
+        //console.log(first);
+        //console.log("----LOOP-------");
+        var flag = true;
+        //Normal section
+        while (flag) { // repeat until it stabilizes
+            flag = false;
+            this.m_nonterminals.forEach(function (productionList, N) {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach(function (P) {
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]
+                    P.every(function (sym) {
+                        if (sym !== "lambda") {
+                            first.get(sym).forEach(function (x) {
+                                if (!first.get(N).has(x)) {
+                                    first.get(N).add(x);
+                                    flag = true;
+                                }
+                            });
+                        }
+                        if (null_set.has(sym)) {
+                            return true;
+                        }
+                        else {
+                            return false;
+                        }
+                    });
+                });
+            });
+        }
+        //console.log("------AFTER-----");
+        //console.log(first);
+        //console.log("------LOOP------");
+        return first;
+    };
+    Grammar.prototype.getFollow = function () {
+        var _this = this;
+        var null_set = this.getNullable();
+        var first = this.getFirst();
+        var follow = new Map();
+        this.m_nonterminals.forEach(function (prodlist, N) {
+            follow.set(N, new Set());
+        });
+        follow["delete"]("WHITESPACE"); // ignore whitespace
+        follow.set(this.m_startVar, new Set("$"));
+        var flag = true;
+        while (flag) {
+            flag = false;
+            this.m_nonterminals.forEach(function (productionList, N) {
+                //production list is the entire production list, with possibly multiple production lists
+                productionList.forEach(function (P) {
+                    var _loop_3 = function (i) {
+                        var broke_loop = false;
+                        var sym = P[i];
+                        if (_this.m_nonterminals.has(sym)) {
+                            for (var y = i + 1; y < P.length; y++) {
+                                var y_sym = P[y];
+                                //union(follow[x], first[y])
+                                first.get(y_sym).forEach(function (y_str) {
+                                    //check for each string in first[y], if it isn't in follow[x] then add it to the set
+                                    if (!follow.get(sym).has(y_str)) {
+                                        follow.get(sym).add(y_str);
+                                        flag = true;
+                                    }
+                                });
+                                if (!null_set.has(y_sym)) {
+                                    //If y is not nullable, break loop
+                                    broke_loop = true;
+                                    break;
+                                }
+                            }
+                            if (!broke_loop) {
+                                //If we didn't break from loop, union follow[x] and follow[N] together.
+                                //What this means is that follow[x] currently has no non-nullable items in it, and such can be unioned.
+                                //union(follow[N], follow[x])
+                                follow.get(N).forEach(function (x) {
+                                    if (!follow.get(sym).has(x)) {
+                                        follow.get(sym).add(x);
+                                        flag = true;
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    //list of individual terms in a production     Ex: ["lamba"], ["A", "B", "C"]    
+                    for (var i = 0; i < P.length; i++) {
+                        _loop_3(i);
+                    }
+                });
+            });
+        }
+        return follow;
     };
     return Grammar;
 }());
