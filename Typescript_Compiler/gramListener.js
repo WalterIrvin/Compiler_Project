@@ -74,6 +74,15 @@ gramListener.prototype.exitExpr = function(ctx) {
 };
 
 
+// Enter a parse tree produced by gramParser#factor.
+gramListener.prototype.enterFactor = function(ctx) {
+};
+
+// Exit a parse tree produced by gramParser#factor.
+gramListener.prototype.exitFactor = function(ctx) {
+};
+
+
 // Enter a parse tree produced by gramParser#return_stmt.
 gramListener.prototype.enterReturn_stmt = function(ctx) {
 };

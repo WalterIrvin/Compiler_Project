@@ -107,12 +107,13 @@ function stmtNodeCode(n) {
 function returnstmtNodeCode(n) {
     //return-stmt -> RETURN expr
     exprNodeCode(n.children[1]);
+    emit("pop rax");
     emit("ret");
 }
 function exprNodeCode(n) {
     //expr -> NUM
     var d = parseInt(n.children[0].token.lexeme, 10);
-    emit("mov rax, " + d);
+    emit("push qword " + d);
 }
 function loopNodeCode(n) {
     // loop -> WHILE LP expr RP braceblock;
@@ -121,6 +122,7 @@ function loopNodeCode(n) {
     emit(startLoopLabel + ":");
     emit("; While Section");
     exprNodeCode(n.children[2]); //leaves result in rax
+    emit("pop rax");
     emit("cmp rax, 0");
     emit("; break out of loop if cond is false");
     emit("je " + endLoopLabel); //break out of loop if condition is false
@@ -136,6 +138,7 @@ function condNodeCode(n) {
     if (n.children.length === 5) {
         //no 'else'
         exprNodeCode(n.children[2]); //leaves result in rax
+        emit("pop rax");
         emit("cmp rax, 0");
         var endifLabel = label();
         emit("je " + endifLabel);
@@ -144,6 +147,7 @@ function condNodeCode(n) {
     }
     else {
         exprNodeCode(n.children[2]); //leaves result in rax
+        emit("pop rax");
         emit("cmp rax, 0");
         var elseLabel = label(); // if cmp fails, we go to else
         var endCondLabel = label(); // if cmp succeeds, we skip else

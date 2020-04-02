@@ -10,6 +10,8 @@ RETURN : 'return';
 LBR : [{];
 RBR : [}];
 NUM : '-'? [0-9]+ ;
+FPNUM : '-'? [0-9]+ '.' [0-9]* (('E' | 'e')?[0-9]+)?;
+STRING : ["]~["]*["];
 
 start : program;
 program : braceblock;
@@ -17,6 +19,7 @@ stmts : stmt stmts | ;
 stmt : cond | loop | return_stmt SEMI;
 cond : IF LP expr RP braceblock | IF LP expr RP braceblock ELSE braceblock;
 braceblock : LBR stmts RBR;
-expr : NUM;
+expr : factor;
+factor : NUM | FPNUM | STRING | LP expr RP;
 return_stmt : RETURN expr;
 loop : WHILE LP expr RP braceblock;

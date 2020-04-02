@@ -7,6 +7,12 @@ let Lexer = require("./gramLexer.js").gramLexer;
 let Parser = require("./gramParser.js").gramParser;
 let asmCode: string[] = []; 
 
+export enum VarType {
+    STRING,
+    INTEGER,
+    FLOAT,
+} 
+
 export function parse(txt: string) : string
 {
     let stream = new antlr4.InputStream(txt);
@@ -119,13 +125,8 @@ function stmtNodeCode(n: TreeNode) {
 function returnstmtNodeCode(n: TreeNode) {
     //return-stmt -> RETURN expr
     exprNodeCode(n.children[1]);
+    emit("pop rax");
     emit("ret");
-}
-
-function exprNodeCode(n: TreeNode) {
-    //expr -> NUM
-    let d = parseInt(n.children[0].token.lexeme, 10);
-    emit(`mov rax, ${d}`);
 }
 
 function loopNodeCode(n: TreeNode) {
@@ -135,6 +136,7 @@ function loopNodeCode(n: TreeNode) {
     emit(`${startLoopLabel}:`);
     emit("; While Section");
     exprNodeCode(n.children[2]);    //leaves result in rax
+    emit("pop rax"); 
     emit("cmp rax, 0");
     emit("; break out of loop if cond is false");
     emit(`je ${endLoopLabel}`);  //break out of loop if condition is false
@@ -152,6 +154,7 @@ function condNodeCode(n: TreeNode) {
     if (n.children.length === 5) {
         //no 'else'
         exprNodeCode(n.children[2]);    //leaves result in rax
+        emit("pop rax"); 
         emit("cmp rax, 0");
         var endifLabel = label();
         emit(`je ${endifLabel}`);
@@ -159,6 +162,7 @@ function condNodeCode(n: TreeNode) {
         emit(`${endifLabel}:`);
     } else {
         exprNodeCode(n.children[2]);    //leaves result in rax
+        emit("pop rax"); 
         emit("cmp rax, 0");
         var elseLabel = label(); // if cmp fails, we go to else
         var endCondLabel = label(); // if cmp succeeds, we skip else
@@ -191,4 +195,141 @@ class ErrorHandler
             " at column ", column);
         throw new Error("Syntax error in ANTLR parse");
     }
+}
+
+//ASM 2
+
+function factorNodeCode(n: TreeNode): VarType {
+    //factor -> NUM | LP expr RP
+    let child = n.children[0];
+    switch (child.sym) {
+        case "NUM":
+            let v = parseInt(child.token.lexeme, 10);
+            emit(`push qword ${v}`)
+            return VarType.INTEGER;
+        case "LP":
+            return exprNodeCode(n.children[1]);
+        default:
+            ICE();
+    }
+}
+
+function exprNodeCode(n: TreeNode): VarType {
+    return orexpNodeCode(n.children[0]);
+}
+//function exprNodeCode(n: TreeNode) {
+    //expr -> NUM
+    //let d = parseInt(n.children[0].token.lexeme, 10);   //ERROR UNDEFINED
+    //emit(`push qword ${d}`);
+//}
+function orexpNodeCode(n: TreeNode): VarType {
+    //orexp -> orexp OR andexp | andexp
+    if (n.children.length === 1) {
+        return andexpNodeCode(n.children[0]);
+    } else {
+        let orexpType = orexpNodeCode(n.children[0]);
+        convertStackTopToZeroOrOneInteger(orexpType);
+
+
+        let lbl = label();
+        emit("cmp qword [rsp], 0");
+        emit(`jne ${lbl}`);
+        emit("add rsp,8");      //discard left result (0)
+        let andexpType = andexpNodeCode(n.children[2]);
+        convertStackTopToZeroOrOneInteger(andexpType);
+        emit(`${lbl}:`);
+        return VarType.INTEGER;   //always integer, even if float operands
+
+
+    }
+}
+
+function andexpNodeCode(n: TreeNode): VarType {
+    return notexpNodeCode(n.children[0]);
+}
+
+function notexpNodeCode(n: TreeNode): VarType {
+    return relexpNodeCode(n.children[0]);
+}
+
+function relexpNodeCode(n: TreeNode): VarType {
+    return sumNodeCode(n.children[0]);
+}
+
+function sumNodeCode(n: TreeNode): VarType {
+    //sum -> sum PLUS term | sum MINUS term | term
+    if (n.children.length === 1) {
+        return termNodeCode(n.children[0]);
+    }
+    else {
+        let sumType = sumNodeCode(n.children[0]);
+        let termType = termNodeCode(n.children[2]);
+        if (sumType !== VarType.INTEGER || termType != VarType.INTEGER) {
+            //error!
+        } else {
+            emit("pop rbx");    //second operand
+            emit("pop rax");    //first operand
+            switch (n.children[1].sym) {
+                case "PLUS":
+                    emit("add rax, rbx");
+                    break;
+                case "MINUS":
+                    emit("sub rax, rbx");
+                    break;
+                default:
+                    ICE();
+            }
+            emit("push rax");
+            return VarType.INTEGER;
+        }
+    }
+}
+
+function relNodeCode(n: TreeNode): VarType {
+    //rel |rarr| sum RELOP sum | sum
+    if (n.children.length === 1)
+        return sumNodeCode(n.children[0]);
+    else {
+        let sum1Type = sumNodeCode(n.children[0]);
+        let sum2Type = sumNodeCode(n.children[2]);
+        if (sum1Type !== VarType.INTEGER || sum2Type != VarType.INTEGER) {
+            //error
+        }
+        emit("pop rax");    //second operand
+        //first operand is on stack
+        emit("cmp [rsp],rax");    //do the compare
+        switch (n.children[1].token.lexeme) {
+            case ">=": emit("setge al"); break;
+            case "<=": emit("setle al"); break;
+            case ">": emit("setg  al"); break;
+            case "<": emit("setl  al"); break;
+            case "==": emit("sete  al"); break;
+            case "!=": emit("setne al"); break;
+            default: ICE()
+        }
+        emit("movzx qword rax, al");   //move with zero extend
+        emit("mov [rsp], rax");
+        return VarType.INTEGER;
+    }
+}
+
+function convertStackTopToZeroOrOneInteger(type: VarType) {
+    if (type == VarType.INTEGER) {
+        emit("cmp qword [rsp], 0");
+        emit("setne al");
+        emit("movzx rax, al");
+        emit("mov [rsp], rax");
+    } else {
+        //error
+    }
+}
+
+function termNodeCode(n: TreeNode): VarType {
+    //TODO
+    return null;
+}
+
+function negNodeCode(n: TreeNode): VarType {
+    //TODO
+    return null;
 }
