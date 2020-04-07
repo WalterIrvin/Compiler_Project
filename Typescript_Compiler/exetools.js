@@ -1,4 +1,20 @@
 "use strict";
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
 exports.__esModule = true;
 var subprocess = require("child_process");
 var fs = require("fs");
@@ -117,7 +133,7 @@ function link(objfile, exefile) {
     var ldexe;
     var ldargs = [];
     var input = "";
-    _a = getLinker(objfile, exefile), ldexe = _a[0], ldargs = _a[1];
+    _a = __read(getLinker(objfile, exefile), 2), ldexe = _a[0], ldargs = _a[1];
     switch (process.platform) {
         case "linux":
             break;
@@ -165,7 +181,7 @@ var subshell = undefined;
 var subshellCallback = undefined;
 function startSubshell() {
     console.log("Starting worker shell...");
-    var _a = getShell(), exe = _a[0], inp = _a[1];
+    var _a = __read(getShell(), 2), exe = _a[0], inp = _a[1];
     subshell = subprocess.spawn(exe, [], {
         stdio: "pipe",
         windowsHide: true
@@ -221,7 +237,7 @@ function linkAsync(objfile, exefile, callback) {
         startSubshell();
     }
     try {
-        var _a = getLinker(objfile, exefile), ldexe = _a[0], ldargs = _a[1];
+        var _a = __read(getLinker(objfile, exefile), 2), ldexe = _a[0], ldargs = _a[1];
         var input1_1;
         var input = void 0;
         switch (process.platform) {

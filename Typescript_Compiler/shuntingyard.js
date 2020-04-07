@@ -4,7 +4,7 @@ var Tokenizer_1 = require("./Tokenizer");
 var Grammar_1 = require("./Grammar");
 var fs = require("fs");
 function parse(inputData) {
-    var data = fs.readFileSync("grammar.txt", "utf8");
+    var data = fs.readFileSync("gram.txt", "utf8");
     var precedence = new Map();
     precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5);
     var associativity = new Map();

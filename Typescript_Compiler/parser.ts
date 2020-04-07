@@ -61,7 +61,6 @@ function walk(parser: any, node: any) : TreeNode
         }
         return N;
     }
-    return null;
 }
 
 let labelCounter = 0;
@@ -217,11 +216,7 @@ function factorNodeCode(n: TreeNode): VarType {
 function exprNodeCode(n: TreeNode): VarType {
     return orexpNodeCode(n.children[0]);
 }
-//function exprNodeCode(n: TreeNode) {
-    //expr -> NUM
-    //let d = parseInt(n.children[0].token.lexeme, 10);   //ERROR UNDEFINED
-    //emit(`push qword ${d}`);
-//}
+
 function orexpNodeCode(n: TreeNode): VarType {
     //orexp -> orexp OR andexp | andexp
     if (n.children.length === 1) {
@@ -239,21 +234,7 @@ function orexpNodeCode(n: TreeNode): VarType {
         convertStackTopToZeroOrOneInteger(andexpType);
         emit(`${lbl}:`);
         return VarType.INTEGER;   //always integer, even if float operands
-
-
     }
-}
-
-function andexpNodeCode(n: TreeNode): VarType {
-    return notexpNodeCode(n.children[0]);
-}
-
-function notexpNodeCode(n: TreeNode): VarType {
-    return relexpNodeCode(n.children[0]);
-}
-
-function relexpNodeCode(n: TreeNode): VarType {
-    return sumNodeCode(n.children[0]);
 }
 
 function sumNodeCode(n: TreeNode): VarType {
@@ -262,9 +243,12 @@ function sumNodeCode(n: TreeNode): VarType {
         return termNodeCode(n.children[0]);
     }
     else {
+        //emit("; in sumNodeCode; doing sum");
         let sumType = sumNodeCode(n.children[0]);
+        //emit("; in sumNodeCode; doing term");
         let termType = termNodeCode(n.children[2]);
         if (sumType !== VarType.INTEGER || termType != VarType.INTEGER) {
+            ICE();
             //error!
         } else {
             emit("pop rbx");    //second operand
@@ -280,13 +264,89 @@ function sumNodeCode(n: TreeNode): VarType {
                     ICE();
             }
             emit("push rax");
+            //emit("; done with sumNodeCode");
             return VarType.INTEGER;
         }
     }
 }
 
-function relNodeCode(n: TreeNode): VarType {
-    //rel |rarr| sum RELOP sum | sum
+function convertStackTopToZeroOrOneInteger(type: VarType) {
+    if (type === VarType.INTEGER) {
+        emit("cmp qword [rsp], 0");
+        emit("setne al");
+        emit("movzx rax, al");
+        emit("mov [rsp], rax");
+    } else {
+        //error
+        throw Error("Invalid type");
+    }
+}
+
+function andexpNodeCode(n: TreeNode): VarType {
+    //andexp AND notexp | notexp;
+    if (n.children.length === 1) {
+        return notexpNodeCode(n.children[0]);
+    } else {
+        let andexp = andexpNodeCode(n.children[0]);
+        convertStackTopToZeroOrOneInteger(andexp);
+        let lbl_false = label();
+        let lbl_end = label();
+        emit("cmp qword [rsp], 1");
+        emit(`jne ${lbl_false}`);  // first case false, jump to end-and
+        emit("add rsp,8");      //discard left result (0)
+        let notexp = notexpNodeCode(n.children[2]);
+        convertStackTopToZeroOrOneInteger(notexp);
+        emit("cmp qword [rsp], 1");
+        emit(`jne ${lbl_false}`);  //second case false, jump to end-and
+        //both cases are true - push 1 to rax?
+        emit("pop rax");
+        emit("mov rax, 1");
+        emit("push rax");
+        emit(`jmp ${lbl_end}`);
+        emit(`${lbl_false}:`);
+        emit("pop rax");
+        emit("mov rax, 0");
+        emit("push rax");
+        emit(`${lbl_end}:`);
+        return VarType.INTEGER;
+    }
+}
+
+function notexpNodeCode(n: TreeNode): VarType {
+    //NOT notexp | rel;
+    //Breaks on test 15 because
+    //N structure looks like such:
+    //NOT , notexp
+    //and It's trying to send NOT through notexp code, which doesn't work.
+    if (n.children.length == 1) {
+        return relexpNodeCode(n.children[0]);
+    }
+    else {
+        let result = notexpNodeCode(n.children[1]);
+        convertStackTopToZeroOrOneInteger(result); //convert value to 0-1, easier to work with
+        //NOT
+        let lbl = label();
+        let lbl_end = label();
+        emit("cmp qword [rsp], 1"); //check if true
+        emit(`je ${lbl}`);
+        emit("; If 0, make 1");
+        emit("pop rax");
+        emit("mov rax, 1");
+        emit("push rax");
+        emit(`jmp ${lbl_end}`);
+        emit(`${lbl}:`); //if true, make false
+        emit("; If 1, make 0");
+        emit("pop rax");
+        emit("mov rax, 0");
+        emit("push rax");
+        emit(`${lbl_end}:`);
+        return result;
+    }
+    
+}
+
+function relexpNodeCode(n: TreeNode): VarType {
+    //sum RELOP sum | sum
     if (n.children.length === 1)
         return sumNodeCode(n.children[0]);
     else {
@@ -313,23 +373,59 @@ function relNodeCode(n: TreeNode): VarType {
     }
 }
 
-function convertStackTopToZeroOrOneInteger(type: VarType) {
-    if (type == VarType.INTEGER) {
-        emit("cmp qword [rsp], 0");
-        emit("setne al");
-        emit("movzx rax, al");
-        emit("mov [rsp], rax");
-    } else {
-        //error
+function termNodeCode(n: TreeNode): VarType {
+    //term MULOP neg | neg;
+    //sum -> sum PLUS term | sum MINUS term | term
+    if (n.children.length === 1) {
+        //if only one child, send term to neg
+        //emit("; inside termNodeCode, n.children.length === 1, going to negNodeCode");
+        return negNodeCode(n.children[0]);
+    }
+    else {
+        //else send it to term mulop then neg
+        console.log(n.children[1]);
+        let val1 = termNodeCode(n.children[0]);
+        let val = negNodeCode(n.children[2]);
+        if (val !== val1) {
+            throw Error("Error invalid types");
+        }
+
+        if (n.children[1].token.lexeme === "*") {
+            emit("pop rbx");    //second operand
+            emit("pop rax");    //first operand
+            emit("imul rbx");
+            emit("push rax");
+        }
+        else if (n.children[1].token.lexeme === "/") {
+            emit("mov rdx, 0");
+            emit("pop rbx");
+            emit("pop rax");
+            emit("idiv rbx");
+            emit("push rax");
+        }
+        else if (n.children[1].token.lexeme === "%") {
+            emit("mov rdx, 0");
+            emit("pop rbx");
+            emit("pop rax");
+            emit("idiv rbx");
+            emit("push rdx");
+        }
+        return val;
     }
 }
 
-function termNodeCode(n: TreeNode): VarType {
-    //TODO
-    return null;
-}
-
 function negNodeCode(n: TreeNode): VarType {
-    //TODO
-    return null;
+    //neg : MINUS neg | factor;
+    if (n.children.length === 1) {
+        //If len is just one, then it goes to factor
+        return factorNodeCode(n.children[0]);
+    }
+    else {
+        
+        let val = negNodeCode(n.children[1]);
+        emit("pop rax")  // get value off of stack
+        emit("neg rax");
+        emit("push rax"); // push back onto stack
+        return val;
+    }
 }

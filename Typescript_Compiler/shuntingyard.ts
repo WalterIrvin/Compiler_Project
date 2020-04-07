@@ -4,7 +4,7 @@ import { Grammar } from "./Grammar";
 let fs = require("fs");
 
 export function parse(inputData: string): TreeNode {
-    let data: string = fs.readFileSync("grammar.txt", "utf8");
+    let data: string = fs.readFileSync("gram.txt", "utf8");
     let precedence: Map<string, number> = new Map<string, number>();
     precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5);
     let associativity: Map<string, string> = new Map<string, string>();
