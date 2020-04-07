@@ -298,7 +298,6 @@ function andexpNodeCode(n: TreeNode): VarType {
         convertStackTopToZeroOrOneInteger(notexp);
         emit("cmp qword [rsp], 1");
         emit(`jne ${lbl_false}`);  //second case false, jump to end-and
-        //both cases are true - push 1 to rax?
         emit("pop rax");
         emit("mov rax, 1");
         emit("push rax");
@@ -314,10 +313,6 @@ function andexpNodeCode(n: TreeNode): VarType {
 
 function notexpNodeCode(n: TreeNode): VarType {
     //NOT notexp | rel;
-    //Breaks on test 15 because
-    //N structure looks like such:
-    //NOT , notexp
-    //and It's trying to send NOT through notexp code, which doesn't work.
     if (n.children.length == 1) {
         return relexpNodeCode(n.children[0]);
     }
