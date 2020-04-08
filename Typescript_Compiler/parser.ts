@@ -314,10 +314,6 @@ function andexpNodeCode(n: TreeNode): VarType {
 
 function notexpNodeCode(n: TreeNode): VarType {
     //NOT notexp | rel;
-    //Breaks on test 15 because
-    //N structure looks like such:
-    //NOT , notexp
-    //and It's trying to send NOT through notexp code, which doesn't work.
     if (n.children.length == 1) {
         return relexpNodeCode(n.children[0]);
     }
