@@ -1,11 +1,21 @@
 SEMI -> ;
+LBR -> [{]
+RBR -> [}]
+LP -> [(]
+RP -> [)]
+EQ -> =
+CMA -> ,
+IF -> \bif\b
+WHILE -> \bwhile\b
+ELSE -> \belse\b
+TYPE -> \b(int\|double)\b
 NUM -> \d+
-ID -> \w+
-POWOP -> \*\*
-MULOP -> [*/]
-ADDOP -> [-+]
-NEGATE -> [-]
-LPAREN -> [(]
-RPAREN -> [)]
-BITNOT -> [~]
-COMMA -> [,]
+ID -> \[A-Za-z\_\]+
+
+S -> stmt-list
+stmt-list -> stmt stmt-list | lambda
+stmt -> loop | cond | assign SEMI | LBR stmt-list RBR
+loop -> WHILE LP expr RP stmt
+cond -> IF LP expr RP stmt | IF LP expr RP stmt ELSE stmt
+assign -> ID EQ expr
+expr -> NUM | ID
