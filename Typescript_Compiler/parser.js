@@ -1,4 +1,15 @@
 "use strict";
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
 exports.__esModule = true;
 var shuntingyard_1 = require("./shuntingyard");
 var Token_1 = require("./Token");
@@ -6,6 +17,35 @@ var antlr4 = require("./antlr4");
 var Lexer = require("./gramLexer.js").gramLexer;
 var Parser = require("./gramParser.js").gramParser;
 var asmCode = [];
+//<ASM3>
+var VarInfo = /** @class */ (function () {
+    //also the line number, if you want
+    function VarInfo(t, location) {
+        this.location = location;
+        this.type = t;
+    }
+    return VarInfo;
+}());
+var SymbolTable = /** @class */ (function () {
+    function SymbolTable() {
+        this.table = new Map();
+    }
+    SymbolTable.prototype.get = function (name) {
+        if (!this.table.has(name))
+            generalError("Does not exist");
+        return this.table.get(name);
+    };
+    SymbolTable.prototype.set = function (name, v) {
+        if (this.table.has(name))
+            generalError("Redeclaration");
+        this.table.set(name, v);
+    };
+    SymbolTable.prototype.has = function (name) {
+        return this.table.has(name);
+    };
+    return SymbolTable;
+}());
+//</ ASM3>
 var VarType;
 (function (VarType) {
     VarType[VarType["STRING"] = 0] = "STRING";
@@ -73,13 +113,18 @@ function makeAsm(root) {
     programNodeCode(root);
     emit("ret");
     emit("section .data");
+    outputSymbolTableInfo();
+    outputStringPoolInfo();
+    stringPool = new Map();
+    symtable = new SymbolTable();
     return asmCode.join("\n");
 }
 function programNodeCode(n) {
-    //program -> braceblock
+    //program -> var_decl_list braceblock
     if (n.sym !== "program")
         ICE();
-    braceblockNodeCode(n.children[0]);
+    vardeclListNodeCode(n.children[0]);
+    braceblockNodeCode(n.children[1]);
 }
 function braceblockNodeCode(n) {
     //braceblock -> LBR stmts RBR
@@ -105,7 +150,11 @@ function stmtNodeCode(n) {
         case "return_stmt":
             returnstmtNodeCode(c);
             break;
+        case "assign":
+            assignNodeCode(c);
+            break;
         default:
+            console.log("Error  in stmtNode");
             ICE();
     }
 }
@@ -168,7 +217,7 @@ function emit(instr) {
 }
 function ICE() {
     //Internal compiler error
-    throw new Error("Error");
+    generalError("Internal Compiler Error");
 }
 var ErrorHandler = /** @class */ (function () {
     function ErrorHandler() {
@@ -190,7 +239,16 @@ function factorNodeCode(n) {
             return VarType.INTEGER;
         case "LP":
             return exprNodeCode(n.children[1]);
+        case "ID":
+            var variable = symtable.get(child.token.lexeme);
+            emit("push qword [" + variable.location + "]");
+            return variable.type;
+        case "STRING_CONSTANT":
+            var add = stringconstantNodeCode(child);
+            emit("push " + add);
+            return VarType.STRING;
         default:
+            console.log("error in factorNode");
             ICE();
     }
 }
@@ -226,6 +284,7 @@ function sumNodeCode(n) {
         //emit("; in sumNodeCode; doing term");
         var termType = termNodeCode(n.children[2]);
         if (sumType !== VarType.INTEGER || termType != VarType.INTEGER) {
+            console.log("Error in sumNode");
             ICE();
             //error!
         }
@@ -257,7 +316,7 @@ function convertStackTopToZeroOrOneInteger(type) {
     }
     else {
         //error
-        throw Error("Invalid type");
+        generalError("Invalid type");
     }
 }
 function andexpNodeCode(n) {
@@ -348,7 +407,9 @@ function relexpNodeCode(n) {
             case "!=":
                 emit("setne al");
                 break;
-            default: ICE();
+            default:
+                console.log("Error relexp");
+                ICE();
         }
         emit("movzx qword rax, al"); //move with zero extend
         emit("mov [rsp], rax");
@@ -369,7 +430,7 @@ function termNodeCode(n) {
         var val1 = termNodeCode(n.children[0]);
         var val = negNodeCode(n.children[2]);
         if (val !== val1) {
-            throw Error("Error invalid types");
+            generalError("Error invalid types");
         }
         if (n.children[1].token.lexeme === "*") {
             emit("pop rbx"); //second operand
@@ -407,5 +468,95 @@ function negNodeCode(n) {
         emit("push rax"); // push back onto stack
         return val;
     }
+}
+//ASM 3
+var stringPool = new Map();
+var symtable = new SymbolTable();
+function vardeclListNodeCode(n) {
+    //var_decl_list : var_decl SEMI var_decl_list | 
+    if (n.children.length !== 3)
+        return;
+    vardeclNodeCode(n.children[0]);
+    vardeclListNodeCode(n.children[2]);
+}
+function typeNodeCode(n) {
+    var l_type = n.token.lexeme;
+    var f_type = VarType.INTEGER;
+    if (l_type === "int")
+        f_type = VarType.INTEGER;
+    else if (l_type === "string")
+        f_type = VarType.STRING;
+    return f_type;
+}
+function vardeclNodeCode(n) {
+    //var-decl -> TYPE ID
+    var vname = n.children[1].token.lexeme;
+    var vtype = typeNodeCode(n.children[0]);
+    symtable.set(vname, new VarInfo(vtype, label()));
+}
+function assignNodeCode(n) {
+    // assign -> ID EQ expr
+    var t = exprNodeCode(n.children[2]);
+    var vname = n.children[0].token.lexeme;
+    if (symtable.get(vname).type !== t)
+        generalError("Type mismatch");
+    moveBytesFromStackToLocation(symtable.get(vname).location);
+}
+function moveBytesFromStackToLocation(loc) {
+    emit("pop rax");
+    emit("mov [" + loc + "], rax");
+}
+function stringconstantNodeCode(n) {
+    var s = n.token.lexeme;
+    //...strip leading and trailing quotation marks...
+    s = s.slice(1, -1);
+    //...handle backslash escapes... \" \n \\
+    if (!stringPool.has(s))
+        stringPool.set(s, label());
+    return stringPool.get(s); //return the label
+}
+function outputSymbolTableInfo() {
+    var e_1, _a;
+    try {
+        for (var _b = __values(symtable.table.keys()), _c = _b.next(); !_c.done; _c = _b.next()) {
+            var vname = _c.value;
+            var vinfo = symtable.get(vname);
+            emit(vinfo.location + ":");
+            emit("dq 0");
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (_c && !_c.done && (_a = _b["return"])) _a.call(_b);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+}
+function outputStringPoolInfo() {
+    stringPool.forEach(function (value, key) {
+        emit(value + ":");
+        for (var i = 0; i < key.length; ++i) {
+            emit("db " + key.charCodeAt(i));
+        }
+        emit("db 0");
+    });
+    /* Doesn't work for some reason
+    for (let key in stringPool.keys()) {
+        let lbl = stringPool.get(key);
+        emit(`${lbl}:`);
+        for (let i = 0; i < key.length; ++i) {
+            emit(`db ${key.charCodeAt(i)}`);
+        }
+        emit("db 0");   //null terminator
+    }
+    */
+}
+function generalError(message) {
+    //Allows compiler to error while also clearing out any globals.
+    symtable = new SymbolTable();
+    stringPool = new Map();
+    labelCounter = 0;
+    throw Error(message);
 }
 //# sourceMappingURL=parser.js.map

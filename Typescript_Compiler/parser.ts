@@ -1,11 +1,44 @@
 import { TreeNode } from "./shuntingyard";
 import { Token } from "./Token";
+import { PassThrough } from "stream";
 
 declare var require: any;
 let antlr4 = require("./antlr4");
 let Lexer = require("./gramLexer.js").gramLexer;
 let Parser = require("./gramParser.js").gramParser;
 let asmCode: string[] = []; 
+
+//<ASM3>
+class VarInfo {
+    type: VarType;
+    location: string;  //asm label
+    //also the line number, if you want
+    constructor(t: VarType, location: string) {
+        this.location = location;
+        this.type = t;
+    }
+}
+
+class SymbolTable {
+    table: Map<string, VarInfo>;
+    constructor() {
+        this.table = new Map();
+    }
+    get(name: string) {
+        if (!this.table.has(name))
+            generalError("Does not exist");
+        return this.table.get(name);
+    }
+    set(name: string, v: VarInfo) {
+        if (this.table.has(name))
+            generalError("Redeclaration");
+        this.table.set(name, v);
+    }
+    has(name: string) {
+        return this.table.has(name);
+    }
+}
+//</ ASM3>
 
 export enum VarType {
     STRING,
@@ -80,14 +113,19 @@ function makeAsm(root: TreeNode) {
     programNodeCode(root);
     emit("ret");
     emit("section .data");
+    outputSymbolTableInfo();
+    outputStringPoolInfo();
+    stringPool = new Map<string, string>();
+    symtable = new SymbolTable();
     return asmCode.join("\n");
 }
 
 function programNodeCode(n: TreeNode) {
-    //program -> braceblock
+    //program -> var_decl_list braceblock
     if (n.sym !== "program")
         ICE();
-    braceblockNodeCode(n.children[0]);
+    vardeclListNodeCode(n.children[0]);
+    braceblockNodeCode(n.children[1]);
 }
 
 function braceblockNodeCode(n: TreeNode) {
@@ -116,7 +154,11 @@ function stmtNodeCode(n: TreeNode) {
         case "return_stmt":
             returnstmtNodeCode(c);
             break;
+        case "assign":
+            assignNodeCode(c);
+            break;
         default:
+            console.log("Error  in stmtNode");
             ICE();
     }
 }
@@ -184,7 +226,7 @@ function emit(instr: string) {
 
 function ICE() {
     //Internal compiler error
-    throw new Error("Error");
+    generalError("Internal Compiler Error");
 }
 class ErrorHandler
 {
@@ -208,7 +250,16 @@ function factorNodeCode(n: TreeNode): VarType {
             return VarType.INTEGER;
         case "LP":
             return exprNodeCode(n.children[1]);
+        case "ID":
+            let variable = symtable.get(child.token.lexeme);
+            emit(`push qword [${variable.location}]`);
+            return variable.type;
+        case "STRING_CONSTANT":
+            let add = stringconstantNodeCode(child);
+            emit(`push ${add}`);
+            return VarType.STRING;
         default:
+            console.log("error in factorNode");
             ICE();
     }
 }
@@ -248,6 +299,7 @@ function sumNodeCode(n: TreeNode): VarType {
         //emit("; in sumNodeCode; doing term");
         let termType = termNodeCode(n.children[2]);
         if (sumType !== VarType.INTEGER || termType != VarType.INTEGER) {
+            console.log("Error in sumNode");
             ICE();
             //error!
         } else {
@@ -278,7 +330,7 @@ function convertStackTopToZeroOrOneInteger(type: VarType) {
         emit("mov [rsp], rax");
     } else {
         //error
-        throw Error("Invalid type");
+        generalError("Invalid type");
     }
 }
 
@@ -360,7 +412,7 @@ function relexpNodeCode(n: TreeNode): VarType {
             case "<": emit("setl  al"); break;
             case "==": emit("sete  al"); break;
             case "!=": emit("setne al"); break;
-            default: ICE()
+            default: console.log("Error relexp"); ICE();
         }
         emit("movzx qword rax, al");   //move with zero extend
         emit("mov [rsp], rax");
@@ -382,7 +434,7 @@ function termNodeCode(n: TreeNode): VarType {
         let val1 = termNodeCode(n.children[0]);
         let val = negNodeCode(n.children[2]);
         if (val !== val1) {
-            throw Error("Error invalid types");
+            generalError("Error invalid types");
         }
 
         if (n.children[1].token.lexeme === "*") {
@@ -423,4 +475,94 @@ function negNodeCode(n: TreeNode): VarType {
         emit("push rax"); // push back onto stack
         return val;
     }
+}
+
+//ASM 3
+let stringPool: Map<string, string> = new Map<string, string>();
+let symtable = new SymbolTable();
+
+function vardeclListNodeCode(n: TreeNode) {
+    //var_decl_list : var_decl SEMI var_decl_list | 
+    if (n.children.length !== 3)
+        return;
+    vardeclNodeCode(n.children[0]);
+    vardeclListNodeCode(n.children[2]);
+}
+
+function typeNodeCode(n: TreeNode): VarType {
+    let l_type = n.token.lexeme;
+    let f_type = VarType.INTEGER;
+    if (l_type === "int")
+        f_type = VarType.INTEGER;
+    else if (l_type === "string")
+        f_type = VarType.STRING;
+    return f_type;
+}
+
+function vardeclNodeCode(n: TreeNode) {
+    //var-decl -> TYPE ID
+    let vname = n.children[1].token.lexeme;
+    let vtype = typeNodeCode(n.children[0]);
+    symtable.set(vname, new VarInfo(vtype, label()));
+}
+
+function assignNodeCode(n: TreeNode) {
+    // assign -> ID EQ expr
+    let t: VarType = exprNodeCode(n.children[2]);
+    let vname = n.children[0].token.lexeme;
+    if (symtable.get(vname).type !== t)
+        generalError("Type mismatch");
+    moveBytesFromStackToLocation(symtable.get(vname).location);
+}
+
+function moveBytesFromStackToLocation(loc: string) {
+    emit("pop rax");
+    emit(`mov [${loc}], rax`);
+}
+
+function stringconstantNodeCode(n: TreeNode) {
+    let s = n.token.lexeme;
+    //...strip leading and trailing quotation marks...
+    s = s.slice(1, -1);
+    //...handle backslash escapes... \" \n \\
+
+    if (!stringPool.has(s))
+        stringPool.set(s, label());
+    return stringPool.get(s);   //return the label
+}
+
+function outputSymbolTableInfo() {
+    for (let vname of symtable.table.keys()) {
+        let vinfo = symtable.get(vname);
+        emit(`${vinfo.location}:`);
+        emit("dq 0");
+    }
+}
+
+function outputStringPoolInfo() {
+    stringPool.forEach((value: string, key: string) => {
+        emit(`${value}:`);
+        for (let i = 0; i < key.length; ++i) {
+            emit(`db ${key.charCodeAt(i)}`);
+        }
+        emit("db 0");
+    });
+    /* Doesn't work for some reason
+    for (let key in stringPool.keys()) {
+        let lbl = stringPool.get(key);
+        emit(`${lbl}:`);
+        for (let i = 0; i < key.length; ++i) {
+            emit(`db ${key.charCodeAt(i)}`);
+        }
+        emit("db 0");   //null terminator
+    }
+    */
+}
+
+function generalError(message: string) {
+    //Allows compiler to error while also clearing out any globals.
+    symtable = new SymbolTable();
+    stringPool = new Map<string, string>();
+    labelCounter = 0;
+    throw Error(message);
 }
