@@ -44,6 +44,7 @@ export enum VarType {
     STRING,
     INTEGER,
     FLOAT,
+    VOID,
 } 
 
 export function parse(txt: string) : string
@@ -106,13 +107,35 @@ function label() {
 function makeAsm(root: TreeNode) {
     asmCode = [];
     labelCounter = 0;
+    emit("%include \"doCall.asm\"");
     emit("default rel");
     emit("section .text");
     emit("global main");
     emit("main:");
+    //ASM4 Code
+    emit("mov arg0, 0");
+    emit("mov arg1, string_r");
+    emit("ffcall fdopen");
+    emit("mov[stdin], rax");
+    emit("mov arg0, 1");
+    emit("mov arg1, string_w");
+    emit("ffcall fdopen");
+    emit("mov[stdout], rax");
+    //ASM4 End Code
     programNodeCode(root);
     emit("ret");
     emit("section .data");
+    //ASM4 DATA SECTION
+    emit("stdin: dq 0");
+    emit("stdout: dq 0");
+    emit("string_r: db 'r', 0");
+    emit("string_w: db 'w', 0");
+    emit("string_a: db 'a', 0");
+    emit("string_rplus: db 'r+', 0");
+    emit("string_percent_s: db '%s', 0");
+    emit("string_percent_d: db '%d', 0");
+    emit("fgets_buffer: times 64 db 0");
+    //ASM4 END DATA SECTION
     outputSymbolTableInfo();
     outputStringPoolInfo();
     stringPool = new Map<string, string>();
@@ -156,6 +179,9 @@ function stmtNodeCode(n: TreeNode) {
             break;
         case "assign":
             assignNodeCode(c);
+            break;
+        case "func_call":
+            funccallNodeCode(c);
             break;
         default:
             console.log("Error  in stmtNode");
@@ -258,6 +284,13 @@ function factorNodeCode(n: TreeNode): VarType {
             let add = stringconstantNodeCode(child);
             emit(`push ${add}`);
             return VarType.STRING;
+        case "func_call":
+            let type = funccallNodeCode(n.children[0]);
+            if (type === VarType.VOID) {
+                //error: Can't use void in expression
+                emit("push rax");
+            }
+            return type;
         default:
             console.log("error in factorNode");
             ICE();
@@ -430,7 +463,6 @@ function termNodeCode(n: TreeNode): VarType {
     }
     else {
         //else send it to term mulop then neg
-        console.log(n.children[1]);
         let val1 = termNodeCode(n.children[0]);
         let val = negNodeCode(n.children[2]);
         if (val !== val1) {
@@ -525,10 +557,51 @@ function stringconstantNodeCode(n: TreeNode) {
     //...strip leading and trailing quotation marks...
     s = s.slice(1, -1);
     //...handle backslash escapes... \" \n \\
+    let ns = s;
+    let slash_counter = 0;
+    let final_str = "";
+    for (let i = 0; i < ns.length; i++) {
+        let cur_char = ns[i];
+        if (cur_char === "\\") {
+            slash_counter += 1;
+        }
+        else {
+            if (slash_counter % 2 === 0) {
+                // If slashes are even, then keep literal character, else use the escape seq
+                let tmp = "";
+                for (let j = 0; j < slash_counter / 2; j++) {
+                    tmp += "\\";
+                }
+                tmp += cur_char;
+                final_str += tmp;
+            }
+            else {
+                let tmp = "";
+                for (let j = 0; j < (slash_counter - 1) / 2; j++) {
+                    tmp += "\\";
+                }
+                switch (cur_char) {
+                    case "n":
+                        tmp += "\n";
+                        break;
+                    case "\"":
+                        tmp += "\"";
+                        break;
+                    case ">":
+                        tmp += "\>";
+                        break;
+                    default:
+                        break;
+                }
+                final_str += tmp;
+            }
+            slash_counter = 0;
+        }
+    }
 
-    if (!stringPool.has(s))
-        stringPool.set(s, label());
-    return stringPool.get(s);   //return the label
+    if (!stringPool.has(final_str))
+        stringPool.set(final_str, label());
+    return stringPool.get(final_str);   //return the label
 }
 
 function outputSymbolTableInfo() {
@@ -565,4 +638,126 @@ function generalError(message: string) {
     stringPool = new Map<string, string>();
     labelCounter = 0;
     throw Error(message);
+}
+
+// ASM 4
+
+function funccallNodeCode(n: TreeNode): VarType {
+    return builtinfunccallNodeCode(n.children[0]);
+}
+
+function builtinfunccallNodeCode(n: TreeNode): VarType {
+    //builtin-func-call -> PRINT LP expr RP | INPUT LP RP |
+    //OPEN LP expr RP | READ LP expr RP | WRITE LP expr CMA expr RP |
+    //CLOSE LP expr RP
+    switch (n.children[0].sym) {
+        //code
+        case "PRINT":
+            {
+                emit("; Starting PRINT");
+                let type = exprNodeCode(n.children[2]);
+                let fmt: string;
+                if (type === VarType.INTEGER) {
+                    fmt = "string_percent_d";
+                }
+                else if (type === VarType.STRING) {
+                    fmt = "string_percent_s";
+                }
+                else {
+                    generalError("Attempting to print invalid type...");
+                }
+
+                emit("pop arg1");   //the thing to print
+                emit(`mov arg0, ${fmt}`); // format, %s or %d
+                emit("ffvcall printf, 0");
+                //need to call fflush(NULL)
+                emit("mov arg0, 0");
+                emit("ffcall fflush");
+                emit("; Ending PRINT");
+            }
+        case "INPUT":
+            {
+                //INPUT LP RP
+                //fgets( ptr, size, stream)
+                //strtol( ptr, eptr, base )
+                emit("mov arg0, fgets_buffer");
+                emit("mov arg1, 64");
+                emit("mov arg2, [stdin]");
+                emit("ffcall fgets");
+                //should do error checking...
+                emit("mov arg0, fgets_buffer");
+                emit("mov arg1, 0");
+                emit("mov arg2, 10");
+                emit("ffcall strtol");  //result is in rax
+                return VarType.INTEGER;
+            }
+        case "OPEN":
+            {
+                let type = exprNodeCode(n.children[2]);
+                if (type !== VarType.STRING)
+                    generalError(`Invalid parameter passed to open function. ${type}, expected ${VarType.STRING} (string)`);
+                //tmp = fopen( filename, "a" );
+                emit("mov arg0, [rsp]");        //filename (string)
+                emit("mov arg1, string_a");    //next slide
+                emit("ffcall fopen");
+                //fclose(tmp)
+                emit("mov arg0, rax")
+                emit("ffcall fclose");
+                //fopen( filename, "r+" )
+                emit("pop arg0");        //filename; remove from stack
+                emit("mov arg1, string_rplus"); //next slide
+                emit("ffcall fopen");     //result is in rax
+                return VarType.INTEGER;
+            }
+        case "READ":
+            {
+                
+            }
+        case "WRITE":
+            {
+                // WRITE LP expr CMA expr RP
+                // fprintf( fp, "%s", str )  or  fprintf( fp, "%d", num )
+                emit("; Begin Write");
+                let handletype = exprNodeCode(n.children[2]);
+                if (handletype !== VarType.INTEGER)
+                    generalError("error invalid type");
+                let outputtype = exprNodeCode(n.children[4]);
+                let fmt: string;
+                if (outputtype === VarType.INTEGER)
+                    fmt = "string_percent_d";
+                else if (outputtype === VarType.STRING)
+                    fmt = "string_percent_s";
+                else
+                    generalError("error invalid type");
+                emit("pop arg2");   //the thing to print
+                emit(`mov arg1, ${fmt}`);
+                emit("pop arg0");   //the handle
+                emit("ffvcall fprintf,0");
+                //need to call fflush(NULL)
+                emit("mov arg0, 0");
+                emit("ffcall fflush");
+                emit("End Write");
+                return VarType.VOID;
+            }
+        case "CLOSE":
+            {
+                emit("; Begin Close");
+                let type = exprNodeCode(n.children[2]);
+                if (type !== VarType.INTEGER)
+                    throw generalError("error: Close requires numeric arg");
+                emit("pop arg0"); //argument for fclose
+                emit("ffcall fclose");
+                emit("; End Close");
+                return VarType.VOID;
+            }
+        case "NOW":
+            {
+
+            }
+        default:
+            ICE();
+            break;
+        
+    }
+    return null;
 }
