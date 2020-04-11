@@ -287,9 +287,9 @@ function factorNodeCode(n: TreeNode): VarType {
         case "func_call":
             let type = funccallNodeCode(n.children[0]);
             if (type === VarType.VOID) {
-                //error: Can't use void in expression
-                emit("push rax");
+                generalError("error: Can't use void in expression");
             }
+            emit("push rax");
             return type;
         default:
             console.log("error in factorNode");
@@ -693,6 +693,7 @@ function builtinfunccallNodeCode(n: TreeNode): VarType {
             }
         case "OPEN":
             {
+                emit("; Start Open")
                 let type = exprNodeCode(n.children[2]);
                 if (type !== VarType.STRING)
                     generalError(`Invalid parameter passed to open function. ${type}, expected ${VarType.STRING} (string)`);
@@ -707,11 +708,29 @@ function builtinfunccallNodeCode(n: TreeNode): VarType {
                 emit("pop arg0");        //filename; remove from stack
                 emit("mov arg1, string_rplus"); //next slide
                 emit("ffcall fopen");     //result is in rax
+                emit("; End Open");
                 return VarType.INTEGER;
             }
         case "READ":
             {
+                emit("; Start Read")
+                let type = exprNodeCode(n.children[2]);
+                if (type !== VarType.INTEGER)
+                    generalError(`Invalid parameter passed to open function. ${type}, expected ${VarType.INTEGER} (integer)`);
+                //fgets( ptr, size, handle)
+                //strtol( ptr, eptr, base )
                 
+                emit("mov arg0, fgets_buffer");
+                emit("mov arg1, 64");
+                emit("pop arg2");
+                emit("ffcall fgets");
+                //should do error checking...
+                emit("mov arg0, fgets_buffer");
+                emit("mov arg1, 0");
+                emit("mov arg2, 10");
+                emit("ffcall strtol");  //result is in rax
+                emit("; End read");
+                return VarType.INTEGER;
             }
         case "WRITE":
             {
@@ -736,7 +755,7 @@ function builtinfunccallNodeCode(n: TreeNode): VarType {
                 //need to call fflush(NULL)
                 emit("mov arg0, 0");
                 emit("ffcall fflush");
-                emit("End Write");
+                emit("; End Write");
                 return VarType.VOID;
             }
         case "CLOSE":
