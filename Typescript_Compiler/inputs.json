@@ -1,7 +1,1040 @@
 [
   {
     "code": ''
+int main() {
+    return 42;
+}
+'',
+    "syntaxOK": true,
+    "returns": 42,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int x;
+int y;
+int foo() {
+    x = 2;
+    y = 3;
+    return x+y;
+}
+
+int main() {
+    return 1+foo();
+}
+'',
+    "syntaxOK": true,
+    "returns": 6,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int y;
+int foo() {
+    x = 2;
+    y = 3;
+    return x+y;
+}
+int x;
+int main() {
+    z = foo();
+    return z+1;
+}
+int z;
+'',
+    "syntaxOK": true,
+    "returns": 6,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+    int x;
+    int y;
+    int z;
+int main() {
+    //simple addition test
+    x = 42;
+    y = 10;
+    z = x+y;
+    return z;
+}
+'',
+    "syntaxOK": true,
+    "returns": 52,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int x;
+int main(){
+    x = 100;
+    y = foo();
+    return y+x;
+}
+int y;
+//redeclared!
+int x;
+int foo(){
+    x = 1;
+    return y+x;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int x;
+int z;
+int total;
+int main(){
+    x = 50;         //x=50, y=?, z=?, total=?
+    y=4;            //x=50, y=4, z=?, total=?
+    total = x;      //x=50, y=4, z=?, total=50
+    z = foo();      //x=1, y=4, z=5, total=50
+    total = total + z;      //x=1, y=4, z=5, total=55
+    return y+total;         //x=1, y=4, z=5, total=55, returns 59
+}
+int y;
+int foo(){
+    x = 1;          //x=1, y=4, z=?, total=50
+    return y+x;
+}
+'',
+    "syntaxOK": true,
+    "returns": 59,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int y;
+int z;
+int main() {
+    y = 10;
+    z = 20;
+    a=y;
+    b=z;
+    return f();
+}
+
+int a;
+int b;
+int f( )
 {
+    return a+b;
+}
+'',
+    "syntaxOK": true,
+    "returns": 30,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+string a;
+int main() {
+    a="foo";
+    f();
+    return 0;
+}
+void f(){
+    print("in f ");
+    print(a);
+    print(" done f");
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": "in f foo done f",
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+string a;
+string b;
+int main() {
+    a="foo";
+    b="bar";
+    f();
+    a="baz";
+    b="bam";
+    f();
+    return 0;
+}
+void f(){
+    print("in f ");
+    print(a);
+    print("x");
+    print(b);
+    print(" done f");
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": "in f fooxbar done fin f bazxbam done f",
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns failure
+    string x;
+    int y;
+    int z;
+int main() {
+    //tries to do addition between string and
+    //number: Should fail
+    
+    x = "foo";
+    y = 42;
+    z = x+y;
+    return 0;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns failure
+    string x;
+    int y;
+    int z;
+int main() {
+    //tries to do subtraction between string and
+    //number: Should fail
+    
+    x = "foo";
+    y = 42;
+    z = x-y;
+    return 0;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns failure
+int main() {
+    //tries to do addition between string and
+    //string: Should fail
+    
+    x = "foo";
+    y = "bar";
+    z = x+y;
+    return 0;
+}
+    string x;
+    string y;
+    string z;
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns failure
+    string x;
+int main() {
+    //undeclared variable y
+    x = "foo";
+    y = 42;
+    return 0;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+    int x;
+    int y;
+    int z;
+    int w;
+int main() {
+    w = -42;
+    x = -w;
+    y = 10;
+    z = x+y;
+    x = z*y/x;
+    return x;
+}
+'',
+    "syntaxOK": true,
+    "returns": 12,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//redeclares main as two different types
+    int x;
+    int y;
+    int z;
+    int main;
+int main() {
+    x=4;
+    y=5;
+    z=6;
+    return x+y+z;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+    int x;
+    int y;
+    int z;
+    int w;
+int main() {
+    w=1;
+    x=2;
+    y=3;
+    z=4;
+    return x * (y + z ) * (y + w) ;
+}
+'',
+    "syntaxOK": true,
+    "returns": 56,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//factorial
+int arg;
+int i;
+int total;
+int rv;
+int main(){
+    arg=5;
+    rv = factorial();
+    print(":");
+    print(rv);
+    print(";");
+    return 0;
+}
+int factorial(){
+    total=1;
+    i=1;
+    while( i <= arg ){
+        total = total * i;
+        i = i + 1;
+    }
+    return total;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": ":120;",
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 2+4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 6,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 1+2*3-4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 3,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 2+2 and 0 or 7*4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 2+2 or 0 or 7*4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 2+2 and 0 and 7*4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 2 or 4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 0 or 4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 4 or 0;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 0 or 0;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 3 and 5;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 0 and 5;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 5 and 0;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 0 and 0;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return not 5;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return not 0;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return not 2+3;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return not 0+0;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 3+4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 7,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 5+6;
+}
+'',
+    "syntaxOK": true,
+    "returns": 11,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 3+4 and 5+6;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 1 > 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 2 > 1;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 1 < 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 2 < 1;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 1 == 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 1 == 1;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 1 != 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 1 != 1;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 1 >= 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 2 >= 1;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns nonzero
+int main() {
+return 1 <= 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 1,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 2 <= 1;
+}
+'',
+    "syntaxOK": true,
+    "returns": 0,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 3 + 4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 7,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 5 - 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 3,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 3 * 4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 12,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 3 * 5 + 2;
+}
+'',
+    "syntaxOK": true,
+    "returns": 17,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 2 + 3*5;
+}
+'',
+    "syntaxOK": true,
+    "returns": 17,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 3*5-4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 11,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 20-3*4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 8,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return 12/6;
+}
+'',
+    "syntaxOK": true,
+    "returns": 2,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+return -(1-4);
+}
+'',
+    "syntaxOK": true,
+    "returns": 3,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+    if( 12 ){
+        return 34;
+    } else {
+        return 78;
+    }
+    return 56;
+}
+'',
+    "syntaxOK": true,
+    "returns": 34,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+    if( 0 ){
+        return 34;
+    } else {
+        return 78;
+    }
+    return 56;
+}
+'',
+    "syntaxOK": true,
+    "returns": 78,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+    if( 0 ){
+        return 34;
+    } 
+    return 56;
+}
+'',
+    "syntaxOK": true,
+    "returns": 56,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+    while( 123 ){
+        return 12;
+    }
+    return 34;
+}
+'',
+    "syntaxOK": true,
+    "returns": 12,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
+    while( 0 ){
+        return 12;
+    }
+    return 34;
+}
+'',
+    "syntaxOK": true,
+    "returns": 34,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+//returns infinite
+int main() {
+    while( 1 ){
+        if( 0 ) {
+            return 1;
+        }
+    }
+}
+'',
+    "syntaxOK": true,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
     print(456);
     return 123;
 }
@@ -15,7 +1048,7 @@
   },
   {
     "code": ''
-{
+int main() {
     print(456);
     print("\n");
     return 123;
@@ -28,13 +1061,24 @@
     "input": null,
     "bonus": false
   },
-  
-  
-  
-  
   {
     "code": ''
-{
+int main() {
+    print(456);
+    print("\\n");
+    return 123;
+}
+'',
+    "syntaxOK": true,
+    "returns": 123,
+    "output": "456\\n",
+    "outputfiles": [],
+    "input": null,
+    "bonus": false
+  },
+  {
+    "code": ''
+int main() {
     print("Hello, world!");
     return 123;
 }
@@ -46,52 +1090,9 @@
     "input": null,
     "bonus": false
   },
-  
-  
-  
-  
-  
   {
     "code": ''
-{
-    print("Hello, \"world\"!");
-    return 123;
-}
-'',
-    "syntaxOK": true,
-    "returns": 123,
-    "output": "Hello, \"world\"!",
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  
-  
-  
-   
-  
-  {
-    "code": ''
-{
-    print("c:\\> format c:\\\nOK");
-    return 123;
-}
-'',
-    "syntaxOK": true,
-    "returns": 123,
-    "output": "c:\\> format c:\\\nOK",
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  
-  
-  
-  
-  {
-    "code": ''
-//A
-{
+int main() {
     print("H");
     print("ell");
     print("o\nw");
@@ -106,76 +1107,16 @@
     "input": null,
     "bonus": false
   },
-  
-  
-  
   {
     "code": ''
-//B
-{
-    print("H");
-    print("ell");
-    print("o\\nw");
-    print("orld!");
-    return 124;
-}
-'',
-    "syntaxOK": true,
-    "returns": 124,
-    "output": "Hello\\nworld!",
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  
-  
-  
-  {
-    "code": ''
-//B
-{
-    print("A\\\\\"B");
-    return 124;
-}
-'',
-    "syntaxOK": true,
-    "returns": 124,
-    "output": "A\\\\\"B",
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  
-  
-  
-  {
-    "code": ''
-//B
-{
-    print("A\n\\n\\\n\\\\n\\\\\n\"\\\"\\\\\"\\\\\\\\\\\\\\B");
-    return 124;
-}
-'',
-    "syntaxOK": true,
-    "returns": 124,
-    "output": "A\n\\n\\\n\\\\n\\\\\n\"\\\"\\\\\"\\\\\\\\\\\\\\B",
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  
-  
-  
-  {
-    "code": ''
-int fp;
-{
+int main() {
     fp = open("blah");
     print("fp is ");
     print(fp);
     close(fp);
     return 23;
 }
+int fp;
 '',
     "syntaxOK": true,
     "returns": 23,
@@ -186,39 +1127,20 @@ int fp;
   },
   {
     "code": ''
-
+int main() {
+    fp = open("blah");
+    write(fp, 40+2 );
+    close(fp);
+    fp = open("blah");
+    value = read(fp);
+    print("value is ");
+    print(value);
+    close(fp);
+    return 0;
+}
     int fp;
-{
-    fp = open("blah");
-    print("fp is ");
-    print(fp);
-    close(fp);
-    return 23;
-}
-'',
-    "syntaxOK": true,
-    "returns": 23,
-    "output": null,
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  {
-    "code": ''
+    int value;
 
-int fp;
-int value;
-{
-    fp = open("blah");
-    write(fp, 40+2 );
-    close(fp);
-    fp = open("blah");
-    value = read(fp);
-    print("value is ");
-    print(value);
-    close(fp);
-    return 0;
-}
 '',
     "syntaxOK": true,
     "returns": 0,
@@ -229,35 +1151,7 @@ int value;
   },
   {
     "code": ''
-
-int fp;
-int value;
-{
-    
-    fp = open("blah");
-    write(fp, 40+2 );
-    close(fp);
-    fp = open("blah");
-    value = read(fp);
-    print("value is ");
-    print(value);
-    close(fp);
-    return 0;
-}
-'',
-    "syntaxOK": true,
-    "returns": 0,
-    "output": "value is 42",
-    "outputfiles": [],
-    "input": null,
-    "bonus": false
-  },
-  {
-    "code": ''
-
-int fp;
-int value;
-{
+int main() {
     fp = open("blah");
     write(fp, 40+2 );
     write(fp," hello");
@@ -269,6 +1163,9 @@ int value;
     close(fp);
     return 0;
 }
+    int fp;
+    int value;
+
 '',
     "syntaxOK": true,
     "returns": 0,
@@ -282,15 +1179,9 @@ int value;
     "input": null,
     "bonus": false
   },
-  
-  
-  
   {
     "code": ''
-
-int fp1;
-int fp2;
-{
+int main() {
     fp1 = open("blah1");
     fp2 = open("blah2");
     write(fp1, "this is " );
@@ -301,6 +1192,9 @@ int fp2;
     close(fp2);
     return 0;
 }
+    int fp1;
+    int fp2;
+
 '',
     "syntaxOK": true,
     "returns": 0,
@@ -318,60 +1212,14 @@ int fp2;
     "input": null,
     "bonus": false
   },
-  
-  
-  
   {
     "code": ''
-
-int fp1;
-string msg;
-int four;
-{
-    msg = "ode to ";
-    four = 4;
-    fp1 = open("ode");
-    write(fp1, msg );
-    write(fp1, four);
-    write(fp1, " grecian urn");
-    close(fp1);
-    return 0;
-}
-'',
-    "syntaxOK": true,
-    "returns": 0,
-    "output": null,
-    "outputfiles": [
-      [
-        "ode",
-        "ode to 4 grecian urn"
-      ],
-      [
-        "blah2",
-        "flivver"
-      ]
-    ],
-    "input": null,
-    "bonus": false
-  },
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  {
-    "code": ''
-
 //returns failure
-int fp;
-{
+int main() {
     fp = open(42);
     return 0;
 }
+    int fp;
 '',
     "syntaxOK": false,
     "returns": null,
@@ -382,8 +1230,8 @@ int fp;
   },
   {
     "code": ''
-
-{
+//returns failure
+int main() {
     write("xyz","abc");
     return 0;
 }
@@ -397,8 +1245,8 @@ int fp;
   },
   {
     "code": ''
-
-{
+//returns failure
+int main() {
     read("xyz");
     return 0;
 }
@@ -410,17 +1258,10 @@ int fp;
     "input": null,
     "bonus": false
   },
-  
-  
-  
-  
   {
     "code": ''
-
-int n;
-int total;
-int i;
-{
+int main() {
+    
     n = input();
     total = 0;
     i=0;
@@ -433,54 +1274,185 @@ int i;
     print("\n");
     return 0;
 }
+int n;
+    int total;
+    int i;
 '',
     "syntaxOK": true,
     "returns": 0,
     "output": "Total: 55\n",
     "outputfiles": [],
-    "input": "10\n",
+    "input": "10",
     "bonus": false
   },
-  
-  
-  
   {
     "code": ''
-
-{
-    print("hello\\nthere");
+void x;
+int main() {
+    return 4;
 }
-
 '',
-    "syntaxOK": true,
-    "returns": 0,
-    "output": "hello\\nthere",
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
     "outputfiles": [],
+    "input": "",
     "bonus": false
   },
-  
-  
-  {
-    "code": ''
-
-string s;
 {
-    s = now();
-    print("It is now ");
-    print(s);
-    print("...\n");
-    return 0;
+    "code": ''
+//mismatched return type
+string x;
+int foo(){
+    return x;
 }
-
+int main() {
+    return 4;
+}
 '',
-    "syntaxOK": true,
-    "returns": 0,
-    "output": "It is now ${now}\n...\n",
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
     "outputfiles": [],
+    "input": "",
     "bonus": 1
+  },
+  {
+    "code": ''
+//mismatched return type
+int x;
+string foo(){
+    return 42;
+}
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": "",
+    "bonus": 1
+  },
+  {
+    "code": ''
+//mismatched return type
+void foo(){
+    return 42;
+}
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": "",
+    "bonus": 1
+  },
+  {
+    "code": ''
+//lack of return
+int foo(){
+    return;
+}
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": "",
+    "bonus": 2
+  },
+  {
+    "code": ''
+//lack of return
+int x;
+int foo(){
+    x=15;
+}
+
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": "",
+    "bonus": 2
+  },
+  {
+    "code": ''
+//lack of return
+int x;
+int foo(){
+    if(x==0){
+        return 1;
+    }
+    while(x != 0){
+        return 0;
+    }
+    x=42;
+}
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": false,
+    "returns": null,
+    "output": null,
+    "outputfiles": [],
+    "input": "",
+    "bonus": 2
+  },
+  {
+    "code": ''
+//no lack of return
+int x;
+int foo(){
+    if(x==0){
+        return 1;
+    }
+    while(x != 0){
+        return 0;
+    }
+    return 2;
+    x=15;
+}
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 4,
+    "output": null,
+    "outputfiles": [],
+    "input": "",
+    "bonus": 0
+  },
+   {
+    "code": ''
+void foo(){
+    return;
+}
+int main() {
+    return 4;
+}
+'',
+    "syntaxOK": true,
+    "returns": 4,
+    "output": "",
+    "outputfiles": [],
+    "input": "",
+    "bonus": 0
   }
   
   
-  
 ]
-

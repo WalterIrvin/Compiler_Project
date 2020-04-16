@@ -40,12 +40,31 @@ class SymbolTable {
 }
 //</ ASM3>
 
-export enum VarType {
-    STRING,
-    INTEGER,
-    FLOAT,
-    VOID,
-} 
+
+//ASM 5
+class VarType {
+    protected constructor() {
+    }
+    //convenience objects so we don't have to change
+    //our existing code
+    static readonly INTEGER = new VarType();
+    static readonly STRING = new VarType();
+    static readonly DOUBLE = new VarType();
+    static readonly VOID = new VarType();
+}
+
+class FuncVarType extends VarType {
+    readonly argTypes: VarType[];
+    readonly argNames: string[];
+    readonly retType: VarType;
+    constructor(argTypes: VarType[], argNames: string[], retType: VarType) {
+        super();
+        this.retType = retType;
+        this.argTypes = argTypes;
+        this.argNames = argNames;
+    }
+}
+//ASM5
 
 export function parse(txt: string) : string
 {
@@ -122,7 +141,8 @@ function makeAsm(root: TreeNode) {
     emit("ffcall fdopen");
     emit("mov[stdout], rax");
     //ASM4 End Code
-    programNodeCode(root);
+    programNodeCode(root, true);
+    programNodeCode(root, false);
     emit("ret");
     emit("section .data");
     //ASM4 DATA SECTION
@@ -141,14 +161,6 @@ function makeAsm(root: TreeNode) {
     stringPool = new Map<string, string>();
     symtable = new SymbolTable();
     return asmCode.join("\n");
-}
-
-function programNodeCode(n: TreeNode) {
-    //program -> var_decl_list braceblock
-    if (n.sym !== "program")
-        ICE();
-    vardeclListNodeCode(n.children[0]);
-    braceblockNodeCode(n.children[1]);
 }
 
 function braceblockNodeCode(n: TreeNode) {
@@ -183,17 +195,13 @@ function stmtNodeCode(n: TreeNode) {
         case "func_call":
             funccallNodeCode(c);
             break;
+        case "return_stmt":
+            returnstmtNodeCode(c);
+            break;
         default:
             console.log("Error  in stmtNode");
             ICE();
     }
-}
-
-function returnstmtNodeCode(n: TreeNode) {
-    //return-stmt -> RETURN expr
-    exprNodeCode(n.children[1]);
-    emit("pop rax");
-    emit("ret");
 }
 
 function loopNodeCode(n: TreeNode) {
@@ -513,14 +521,6 @@ function negNodeCode(n: TreeNode): VarType {
 let stringPool: Map<string, string> = new Map<string, string>();
 let symtable = new SymbolTable();
 
-function vardeclListNodeCode(n: TreeNode) {
-    //var_decl_list : var_decl SEMI var_decl_list | 
-    if (n.children.length !== 3)
-        return;
-    vardeclNodeCode(n.children[0]);
-    vardeclListNodeCode(n.children[2]);
-}
-
 function typeNodeCode(n: TreeNode): VarType {
     let l_type = n.token.lexeme;
     let f_type = VarType.INTEGER;
@@ -528,14 +528,11 @@ function typeNodeCode(n: TreeNode): VarType {
         f_type = VarType.INTEGER;
     else if (l_type === "string")
         f_type = VarType.STRING;
+    else if (l_type === "void")
+        f_type = VarType.VOID;
+    else if (l_type === "double")
+        f_type = VarType.DOUBLE;
     return f_type;
-}
-
-function vardeclNodeCode(n: TreeNode) {
-    //var-decl -> TYPE ID
-    let vname = n.children[1].token.lexeme;
-    let vtype = typeNodeCode(n.children[0]);
-    symtable.set(vname, new VarInfo(vtype, label()));
 }
 
 function assignNodeCode(n: TreeNode) {
@@ -641,10 +638,6 @@ function generalError(message: string) {
 }
 
 // ASM 4
-
-function funccallNodeCode(n: TreeNode): VarType {
-    return builtinfunccallNodeCode(n.children[0]);
-}
 
 function builtinfunccallNodeCode(n: TreeNode): VarType {
     //builtin-func-call -> PRINT LP expr RP | INPUT LP RP |
@@ -779,4 +772,109 @@ function builtinfunccallNodeCode(n: TreeNode): VarType {
         
     }
     return null;
+}
+
+// ASM 5
+
+function programNodeCode(n: TreeNode, firstPass: boolean) {
+    //program -> var_decl_list braceblock
+    if (n.sym !== "program")
+        ICE();
+    declListNodeCode(n.children[0], firstPass);
+}
+
+function declListNodeCode(n: TreeNode, firstPass: boolean) {
+    //decl-list ? func-decl decl-list | var-decl SEMI decl-list | ?
+    if (n.children.length == 2) {
+        funcdeclNodeCode(n.children[0], firstPass);
+        declListNodeCode(n.children[1], firstPass);
+    }
+    else if (n.children.length == 3) {
+        vardeclNodeCode(n.children[0], firstPass);
+        declListNodeCode(n.children[2], firstPass);
+    }
+
+}
+
+function getVarTypeFromToken(n: TreeNode): VarType {
+    return typeNodeCode(n);
+}
+
+function vardeclNodeCode(n: TreeNode, firstPass: boolean) {
+    //var-decl -> TYPE ID
+    if (firstPass) {
+        vardeclFirstPass(n);
+    }
+    else {
+        vardeclSecondPass(n);
+    }
+    
+}
+
+function vardeclFirstPass(n: TreeNode) {
+    let vname = n.children[1].token.lexeme;
+    let vtype = typeNodeCode(n.children[0]);
+    symtable.set(vname, new VarInfo(vtype, label()));
+}
+
+function vardeclSecondPass(n: TreeNode) {
+
+}
+
+function funcdeclNodeCode(n: TreeNode, firstPass: boolean) {
+    //func-decl -> TYPE ID LP optional-param-list RP braceblock
+    if (firstPass) {
+        funcdeclFirstPass(n);
+    } else {
+        funcdeclSecondPass(n);
+    }
+}
+
+function funcdeclFirstPass(n: TreeNode) {
+    //func-decl -> TYPE ID LP optional-param-list RP braceblock
+    let funcName = n.children[1].token.lexeme;
+    let returnType = getVarTypeFromToken(n.children[0]);
+    let argTypes: VarType[] = [];
+    let argNames: string[] = [];
+    let lbl = label();
+    let vtype = new FuncVarType(argTypes, argNames, returnType);
+    //throws error if duplicate name
+    symtable.set(funcName, new VarInfo(vtype, lbl));
+}
+
+function funcdeclSecondPass(n: TreeNode) {
+    //func-decl ? TYPE ID LP optional-param-list RP braceblock
+    let funcName = n.children[1].token.lexeme;
+    let vinfo: VarInfo = symtable.get(funcName);
+    emit(`${vinfo.location}:`);
+    braceblockNodeCode(n.children[5]);
+}
+
+function funccallNodeCode(n: TreeNode): VarType {
+    //func-call -> ID LP optional-expr-list RP | builtin-func-call
+    if (n.children.length === 1)
+        return builtinfunccallNodeCode(n);
+    else {
+        let funcname = n.children[0].token.lexeme;
+        //throws exception if not found
+        let info: VarType = symtable.get(funcname).type;
+        if (!(info instanceof FuncVarType)) {
+            generalError("error: Can't call a non-function");
+        }
+        let funcInfo = (info as FuncVarType);
+        emit(`call ${symtable.get(funcname).location}`);
+        return funcInfo.retType;
+    }
+}
+
+function returnstmtNodeCode(n: TreeNode) {
+    //return-stmt ? RETURN expr | RETURN
+    if (n.children.length == 1) {
+        emit("ret");
+    }
+    else {
+        exprNodeCode(n.children[1]);
+        emit("pop rax");
+        emit("ret");
+    }
 }

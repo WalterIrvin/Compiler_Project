@@ -1,4 +1,17 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __values = (this && this.__values) || function(o) {
     var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
@@ -46,13 +59,30 @@ var SymbolTable = /** @class */ (function () {
     return SymbolTable;
 }());
 //</ ASM3>
-var VarType;
-(function (VarType) {
-    VarType[VarType["STRING"] = 0] = "STRING";
-    VarType[VarType["INTEGER"] = 1] = "INTEGER";
-    VarType[VarType["FLOAT"] = 2] = "FLOAT";
-    VarType[VarType["VOID"] = 3] = "VOID";
-})(VarType = exports.VarType || (exports.VarType = {}));
+//ASM 5
+var VarType = /** @class */ (function () {
+    function VarType() {
+    }
+    //convenience objects so we don't have to change
+    //our existing code
+    VarType.INTEGER = new VarType();
+    VarType.STRING = new VarType();
+    VarType.DOUBLE = new VarType();
+    VarType.VOID = new VarType();
+    return VarType;
+}());
+var FuncVarType = /** @class */ (function (_super) {
+    __extends(FuncVarType, _super);
+    function FuncVarType(argTypes, argNames, retType) {
+        var _this = _super.call(this) || this;
+        _this.retType = retType;
+        _this.argTypes = argTypes;
+        _this.argNames = argNames;
+        return _this;
+    }
+    return FuncVarType;
+}(VarType));
+//ASM5
 function parse(txt) {
     var stream = new antlr4.InputStream(txt);
     var lexer = new Lexer(stream);
@@ -122,7 +152,8 @@ function makeAsm(root) {
     emit("ffcall fdopen");
     emit("mov[stdout], rax");
     //ASM4 End Code
-    programNodeCode(root);
+    programNodeCode(root, true);
+    programNodeCode(root, false);
     emit("ret");
     emit("section .data");
     //ASM4 DATA SECTION
@@ -141,13 +172,6 @@ function makeAsm(root) {
     stringPool = new Map();
     symtable = new SymbolTable();
     return asmCode.join("\n");
-}
-function programNodeCode(n) {
-    //program -> var_decl_list braceblock
-    if (n.sym !== "program")
-        ICE();
-    vardeclListNodeCode(n.children[0]);
-    braceblockNodeCode(n.children[1]);
 }
 function braceblockNodeCode(n) {
     //braceblock -> LBR stmts RBR
@@ -179,16 +203,13 @@ function stmtNodeCode(n) {
         case "func_call":
             funccallNodeCode(c);
             break;
+        case "return_stmt":
+            returnstmtNodeCode(c);
+            break;
         default:
             console.log("Error  in stmtNode");
             ICE();
     }
-}
-function returnstmtNodeCode(n) {
-    //return-stmt -> RETURN expr
-    exprNodeCode(n.children[1]);
-    emit("pop rax");
-    emit("ret");
 }
 function loopNodeCode(n) {
     // loop -> WHILE LP expr RP braceblock;
@@ -504,13 +525,6 @@ function negNodeCode(n) {
 //ASM 3
 var stringPool = new Map();
 var symtable = new SymbolTable();
-function vardeclListNodeCode(n) {
-    //var_decl_list : var_decl SEMI var_decl_list | 
-    if (n.children.length !== 3)
-        return;
-    vardeclNodeCode(n.children[0]);
-    vardeclListNodeCode(n.children[2]);
-}
 function typeNodeCode(n) {
     var l_type = n.token.lexeme;
     var f_type = VarType.INTEGER;
@@ -518,13 +532,11 @@ function typeNodeCode(n) {
         f_type = VarType.INTEGER;
     else if (l_type === "string")
         f_type = VarType.STRING;
+    else if (l_type === "void")
+        f_type = VarType.VOID;
+    else if (l_type === "double")
+        f_type = VarType.DOUBLE;
     return f_type;
-}
-function vardeclNodeCode(n) {
-    //var-decl -> TYPE ID
-    var vname = n.children[1].token.lexeme;
-    var vtype = typeNodeCode(n.children[0]);
-    symtable.set(vname, new VarInfo(vtype, label()));
 }
 function assignNodeCode(n) {
     // assign -> ID EQ expr
@@ -633,9 +645,6 @@ function generalError(message) {
     throw Error(message);
 }
 // ASM 4
-function funccallNodeCode(n) {
-    return builtinfunccallNodeCode(n.children[0]);
-}
 function builtinfunccallNodeCode(n) {
     //builtin-func-call -> PRINT LP expr RP | INPUT LP RP |
     //OPEN LP expr RP | READ LP expr RP | WRITE LP expr CMA expr RP |
@@ -765,5 +774,96 @@ function builtinfunccallNodeCode(n) {
             break;
     }
     return null;
+}
+// ASM 5
+function programNodeCode(n, firstPass) {
+    //program -> var_decl_list braceblock
+    if (n.sym !== "program")
+        ICE();
+    declListNodeCode(n.children[0], firstPass);
+}
+function declListNodeCode(n, firstPass) {
+    //decl-list ? func-decl decl-list | var-decl SEMI decl-list | ?
+    if (n.children.length == 2) {
+        funcdeclNodeCode(n.children[0], firstPass);
+        declListNodeCode(n.children[1], firstPass);
+    }
+    else if (n.children.length == 3) {
+        vardeclNodeCode(n.children[0], firstPass);
+        declListNodeCode(n.children[2], firstPass);
+    }
+}
+function getVarTypeFromToken(n) {
+    return typeNodeCode(n);
+}
+function vardeclNodeCode(n, firstPass) {
+    //var-decl -> TYPE ID
+    if (firstPass) {
+        vardeclFirstPass(n);
+    }
+    else {
+        vardeclSecondPass(n);
+    }
+}
+function vardeclFirstPass(n) {
+    var vname = n.children[1].token.lexeme;
+    var vtype = typeNodeCode(n.children[0]);
+    symtable.set(vname, new VarInfo(vtype, label()));
+}
+function vardeclSecondPass(n) {
+}
+function funcdeclNodeCode(n, firstPass) {
+    //func-decl -> TYPE ID LP optional-param-list RP braceblock
+    if (firstPass) {
+        funcdeclFirstPass(n);
+    }
+    else {
+        funcdeclSecondPass(n);
+    }
+}
+function funcdeclFirstPass(n) {
+    //func-decl -> TYPE ID LP optional-param-list RP braceblock
+    var funcName = n.children[1].token.lexeme;
+    var returnType = getVarTypeFromToken(n.children[0]);
+    var argTypes = [];
+    var argNames = [];
+    var lbl = label();
+    var vtype = new FuncVarType(argTypes, argNames, returnType);
+    //throws error if duplicate name
+    symtable.set(funcName, new VarInfo(vtype, lbl));
+}
+function funcdeclSecondPass(n) {
+    //func-decl ? TYPE ID LP optional-param-list RP braceblock
+    var funcName = n.children[1].token.lexeme;
+    var vinfo = symtable.get(funcName);
+    emit(vinfo.location + ":");
+    braceblockNodeCode(n.children[5]);
+}
+function funccallNodeCode(n) {
+    //func-call -> ID LP optional-expr-list RP | builtin-func-call
+    if (n.children.length === 1)
+        return builtinfunccallNodeCode(n);
+    else {
+        var funcname = n.children[0].token.lexeme;
+        //throws exception if not found
+        var info = symtable.get(funcname).type;
+        if (!(info instanceof FuncVarType)) {
+            generalError("error: Can't call a non-function");
+        }
+        var funcInfo = info;
+        emit("call " + symtable.get(funcname).location);
+        return funcInfo.retType;
+    }
+}
+function returnstmtNodeCode(n) {
+    //return-stmt ? RETURN expr | RETURN
+    if (n.children.length == 1) {
+        emit("ret");
+    }
+    else {
+        exprNodeCode(n.children[1]);
+        emit("pop rax");
+        emit("ret");
+    }
 }
 //# sourceMappingURL=parser.js.map
