@@ -264,11 +264,8 @@ function ICE() {
 }
 class ErrorHandler
 {
-    syntaxError(rec: any, sym: any, line: number,
-        column: number, msg: string, e: any) {
-        console.log("Syntax error: ", msg, " on line ", line,
-            " at column ", column);
-        throw new Error("Syntax error in ANTLR parse");
+    syntaxError(rec: any, sym: any, line: number, column: number, msg: string, e: any) {
+        throw new Error("Syntax error:" + msg + "on line" + line + "at column" + column);
     }
 }
 

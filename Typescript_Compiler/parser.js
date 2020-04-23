@@ -270,8 +270,7 @@ var ErrorHandler = /** @class */ (function () {
     function ErrorHandler() {
     }
     ErrorHandler.prototype.syntaxError = function (rec, sym, line, column, msg, e) {
-        console.log("Syntax error: ", msg, " on line ", line, " at column ", column);
-        throw new Error("Syntax error in ANTLR parse");
+        throw new Error("Syntax error:" + msg + "on line" + line + "at column" + column);
     };
     return ErrorHandler;
 }());

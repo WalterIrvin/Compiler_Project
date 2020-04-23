@@ -37,7 +37,6 @@ decl_list : func_decl decl_list | var_decl SEMI decl_list | ;
 func_decl : TYPE ID LP optional_param_list RP braceblock;
 optional_param_list : ;
 optional_expr_list : ;
-var_decl_list : var_decl SEMI var_decl_list | ;
 var_decl : TYPE ID;
 stmts : stmt stmts | ;
 stmt : cond | loop | return_stmt SEMI | assign SEMI | func_call SEMI | return_stmt SEMI;
