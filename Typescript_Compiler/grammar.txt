@@ -10,7 +10,7 @@ WHILE -> \bwhile\b
 ELSE -> \belse\b
 TYPE -> \b(int\|double)\b
 NUM -> \d+
-ID -> \[A-Za-z\_\]+
+ID -> [A-Za-z_]+
 
 S -> stmt-list
 stmt-list -> stmt stmt-list | lambda

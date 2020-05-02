@@ -30,7 +30,7 @@ var Grammar = /** @class */ (function () {
                 }
                 else { // split len != 2
                     if (!tokenOnlyFlag) {
-                        if (varList[i].length === 0) {
+                        if (varList[i].length === 0 || varList[i].length === 1) {
                             terminal_section = false;
                             console.log("Terminal section over");
                         }
@@ -42,39 +42,41 @@ var Grammar = /** @class */ (function () {
             }
             else {
                 // Non terminal section
-                var splitList = varList[i].split(" -> ", 2);
-                var leftSide = splitList[0];
-                var alternation = splitList[1].split(" | "); // splits rhs into different | terms
-                var newProdArray_1 = new Array();
-                alternation.forEach(function (production) {
-                    var productionList = new Array();
-                    var nonTermsRightSide = production.split(" "); //splits each equation into individual terms seperated by space character.
-                    nonTermsRightSide.forEach(function (nonTerm) {
-                        var nTerm = nonTerm.trim();
-                        if (nTerm !== '')
-                            productionList.push(nTerm);
+                if (varList !== undefined) {
+                    var splitList = varList[i].split(" -> ", 2);
+                    var leftSide = splitList[0];
+                    var alternation = splitList[1].split(" | "); // splits rhs into different | terms
+                    var newProdArray_1 = new Array();
+                    alternation.forEach(function (production) {
+                        var productionList = new Array();
+                        var nonTermsRightSide = production.split(" "); //splits each equation into individual terms seperated by space character.
+                        nonTermsRightSide.forEach(function (nonTerm) {
+                            var nTerm = nonTerm.trim();
+                            if (nTerm !== '')
+                                productionList.push(nTerm);
+                        });
+                        newProdArray_1.push(productionList);
                     });
-                    newProdArray_1.push(productionList);
-                });
-                if (this_1.m_nonterminals.has(leftSide)) {
-                    //concat new productions to an existing nonterminal
-                    var oldList = this_1.m_nonterminals.get(leftSide);
-                    var newList = oldList.concat(newProdArray_1);
-                    this_1.m_nonterminals.set(leftSide, newList);
+                    if (this_1.m_nonterminals.has(leftSide)) {
+                        //concat new productions to an existing nonterminal
+                        var oldList = this_1.m_nonterminals.get(leftSide);
+                        var newList = oldList.concat(newProdArray_1);
+                        this_1.m_nonterminals.set(leftSide, newList);
+                    }
+                    else {
+                        if (this_1.m_nonterminals.size == 0)
+                            this_1.m_nonterminalStart = leftSide;
+                        //Create new nonterminal
+                        this_1.m_nonterminals.set(leftSide, newProdArray_1);
+                    }
                 }
-                else {
-                    if (this_1.m_nonterminals.size == 0)
-                        this_1.m_nonterminalStart = leftSide;
-                    //Create new nonterminal
-                    this_1.m_nonterminals.set(leftSide, newProdArray_1);
-                }
-                this_1.check_valid();
             }
         };
         var this_1 = this;
         for (var i = 0; i < varList.length; i++) {
             _loop_1(i);
         }
+        //this.check_valid();
     }
     Grammar.prototype.check_valid = function () {
         var _this = this;
@@ -94,6 +96,7 @@ var Grammar = /** @class */ (function () {
                 throw Error("Error: this is an unused terminal: " + symbol);
             }
         });
+        console.log("Grammar looks good.");
     };
     Grammar.prototype.depth_first_search = function (label, neighborSet) {
         var _this = this;

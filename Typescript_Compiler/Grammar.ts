@@ -31,7 +31,7 @@ export class Grammar {
                 else { // split len != 2
                     if (!tokenOnlyFlag)
                     {
-                        if (varList[i].length === 0) {
+                        if (varList[i].length === 0 || varList[i].length === 1) {
                             terminal_section = false;
                             console.log("Terminal section over");
                         }
@@ -43,40 +43,39 @@ export class Grammar {
             }
             else {
                 // Non terminal section
-                let splitList = varList[i].split(" -> ", 2);
-                let leftSide = splitList[0];
-                let alternation = splitList[1].split(" | "); // splits rhs into different | terms
-                let newProdArray = new Array<Array<string>>();
-                
-                alternation.forEach((production: string) => {
-                    let productionList = new Array<string>();
-                    let nonTermsRightSide = production.split(" "); //splits each equation into individual terms seperated by space character.
-                    nonTermsRightSide.forEach((nonTerm: string) => {
-                        let nTerm = nonTerm.trim();
-                        if (nTerm !== '')
-                            productionList.push(nTerm);
-                    });
-                    newProdArray.push(productionList);
+                if (varList !== undefined) {
+                    let splitList = varList[i].split(" -> ", 2);
+                    let leftSide = splitList[0];
+                    let alternation = splitList[1].split(" | "); // splits rhs into different | terms
+                    let newProdArray = new Array<Array<string>>();
 
-                });
-                if (this.m_nonterminals.has(leftSide))
-                {
-                    //concat new productions to an existing nonterminal
-                    let oldList = this.m_nonterminals.get(leftSide);
-                    let newList = oldList.concat(newProdArray);
-                    this.m_nonterminals.set(leftSide, newList);
+                    alternation.forEach((production: string) => {
+                        let productionList = new Array<string>();
+                        let nonTermsRightSide = production.split(" "); //splits each equation into individual terms seperated by space character.
+                        nonTermsRightSide.forEach((nonTerm: string) => {
+                            let nTerm = nonTerm.trim();
+                            if (nTerm !== '')
+                                productionList.push(nTerm);
+                        });
+                        newProdArray.push(productionList);
+
+                    });
+                    if (this.m_nonterminals.has(leftSide)) {
+                        //concat new productions to an existing nonterminal
+                        let oldList = this.m_nonterminals.get(leftSide);
+                        let newList = oldList.concat(newProdArray);
+                        this.m_nonterminals.set(leftSide, newList);
+                    }
+                    else {
+                        if (this.m_nonterminals.size == 0)
+                            this.m_nonterminalStart = leftSide
+                        //Create new nonterminal
+                        this.m_nonterminals.set(leftSide, newProdArray);
+                    }
                 }
-                else
-                {
-                    if (this.m_nonterminals.size == 0)
-                        this.m_nonterminalStart = leftSide
-                    //Create new nonterminal
-                    this.m_nonterminals.set(leftSide, newProdArray);
-                }
-                this.check_valid();
             }
         }
-        
+        //this.check_valid();
     }
 
     check_valid()
@@ -101,6 +100,7 @@ export class Grammar {
                 throw Error("Error: this is an unused terminal: " + symbol);
             }
         });
+        console.log("Grammar looks good.");
     }
 
     depth_first_search(label: string, neighborSet: Set<string>)

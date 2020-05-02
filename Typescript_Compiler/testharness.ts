@@ -37,11 +37,18 @@ function testWithFile(fname:string, doBonus: boolean ): boolean{
         
         try{
             actual = parse(input);
-        } catch(e){
+        } catch (e) {
+            console.log(e);
             actual = undefined;
         }
          
-        if( !treesAreSame( actual, expected ) ){
+        if (!treesAreSame(actual, expected)) {
+            console.log("-----------------");
+            console.log("Actual tree");
+            console.log(JSON.stringify(actual, null, 4));
+            console.log("-----------------");
+            console.log("Expected tree");
+            console.log(JSON.stringify(expected, null, 4));
             console.log("Test "+name+" failed: Tree mismatch");
             return false;
         } 
