@@ -6,9 +6,9 @@ let fs = require("fs");
 export function parse(inputData: string): TreeNode {
     let data: string = fs.readFileSync("grammar.txt", "utf8");
     let precedence: Map<string, number> = new Map<string, number>();
-    precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5);
+    precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5).set("func-call", 6);
     let associativity: Map<string, string> = new Map<string, string>();
-    associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right");
+    associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right").set("COMMA", "left");
     let arity: Map<string, number> = new Map<string, number>();
     arity.set("func-call", 2).set("BITNOT", 1).set("NEGATE", 1).set("POWOP", 2).set("MULOP", 2).set("ADDOP", 2).set("COMMA", 2);
     let inputGrammar: Grammar = new Grammar(data, true);
@@ -31,7 +31,15 @@ export function parse(inputData: string): TreeNode {
                 t.sym = "NEGATE";
             }
         }
-        if (t.sym === "NUM" || t.sym === "ID") {
+        if (t.sym === "NUM") {
+            operandStack.push(new TreeNode(t.sym, t));
+        }
+        else if (t.sym === "ID") {
+            //Peek next token, if LP then we got a func-call
+            let result = tokenGenerator.peek();
+            if (result === "LPAREN") {
+                operatorStack.push(new TreeNode("func-call", null));
+            }
             operandStack.push(new TreeNode(t.sym, t));
         }
         else if (t.sym === "LPAREN") {

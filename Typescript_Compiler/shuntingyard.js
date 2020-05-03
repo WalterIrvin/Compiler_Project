@@ -6,9 +6,9 @@ var fs = require("fs");
 function parse(inputData) {
     var data = fs.readFileSync("grammar.txt", "utf8");
     var precedence = new Map();
-    precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5);
+    precedence.set("COMMA", 0).set("ADDOP", 1).set("MULOP", 2).set("BITNOT", 3).set("NEGATE", 4).set("POWOP", 5).set("func-call", 6);
     var associativity = new Map();
-    associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right");
+    associativity.set("LPAREN", "left").set("POWOP", "right").set("MULOP", "left").set("ADDOP", "left").set("NEGATE", "right").set("BITNOT", "right").set("COMMA", "left");
     var arity = new Map();
     arity.set("func-call", 2).set("BITNOT", 1).set("NEGATE", 1).set("POWOP", 2).set("MULOP", 2).set("ADDOP", 2).set("COMMA", 2);
     var inputGrammar = new Grammar_1.Grammar(data, true);
@@ -28,7 +28,15 @@ function parse(inputData) {
                 t.sym = "NEGATE";
             }
         }
-        if (t.sym === "NUM" || t.sym === "ID") {
+        if (t.sym === "NUM") {
+            operandStack.push(new TreeNode(t.sym, t));
+        }
+        else if (t.sym === "ID") {
+            //Peek next token, if LP then we got a func-call
+            var result = tokenGenerator.peek();
+            if (result === "LPAREN") {
+                operatorStack.push(new TreeNode("func-call", null));
+            }
             operandStack.push(new TreeNode(t.sym, t));
         }
         else if (t.sym === "LPAREN") {

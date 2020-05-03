@@ -38,6 +38,12 @@ function testWithFile(fname) {
         if (!treesAreSame(actual, expected)) {
             console.log("BAD!");
             console.log(inp);
+            console.log("----------------");
+            console.log("Actual tree");
+            console.log(JSON.stringify(actual, null, 4));
+            console.log("----------------");
+            console.log("Expected tree");
+            console.log(JSON.stringify(expected, null, 4));
             dumpTree("actual.dot", actual);
             dumpTree("expected.dot", expected);
             return false;
