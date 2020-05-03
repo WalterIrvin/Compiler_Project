@@ -11,7 +11,10 @@ function parse(input) {
     G = new Grammar_1.Grammar(data);
     T = new Tokenizer_1.Tokenizer(G);
     T.setInput(input);
-    return parse_S();
+    var tree_root = parse_S();
+    //console.log("actual")
+    //console.log(JSON.stringify(tree_root, null, 4));
+    return tree_root;
 }
 exports.parse = parse;
 function parse_S() {
@@ -45,8 +48,9 @@ function parse_stmt() {
             n.children.push(new shuntingyard_1.TreeNode("SEMI", T.expect("SEMI")));
             break;
         case "LBR":
+            n.children.push(new shuntingyard_1.TreeNode("LBR", T.expect("LBR")));
             n.children.push(parse_stmt_list());
-            T.expect("RBR");
+            n.children.push(new shuntingyard_1.TreeNode("RBR", T.expect("RBR")));
             break;
         default:
             throw Error("Something bad happened here in parse_stmt.");
@@ -71,10 +75,11 @@ function parse_cond() {
     n.children.push(parse_expr());
     n.children.push(new shuntingyard_1.TreeNode("RP", T.expect("RP")));
     n.children.push(parse_stmt());
-    if (T.peek() === "ELSE") {
+    var result = T.peek();
+    if (result === "ELSE") {
         n.children.push(new shuntingyard_1.TreeNode("ELSE", T.expect("ELSE")));
+        n.children.push(parse_stmt());
     }
-    n.children.push(parse_stmt());
     return n;
 }
 function parse_assign() {
@@ -88,10 +93,11 @@ function parse_assign() {
 function parse_expr() {
     //expr -> NUM | ID
     var n = new shuntingyard_1.TreeNode("expr", null);
-    if (T.peek() === "NUM") {
+    var result = T.peek();
+    if (result === "NUM") {
         n.children.push(new shuntingyard_1.TreeNode("NUM", T.expect("NUM")));
     }
-    else if (T.peek() === "ID") {
+    else if (result === "ID") {
         n.children.push(new shuntingyard_1.TreeNode("ID", T.expect("ID")));
     }
     return n;

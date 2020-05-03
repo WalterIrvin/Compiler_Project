@@ -10,7 +10,10 @@ export function parse(input: string): TreeNode {
     G = new Grammar(data);
     T = new Tokenizer(G);
     T.setInput(input);
-    return parse_S();
+    let tree_root = parse_S();
+    //console.log("actual")
+    //console.log(JSON.stringify(tree_root, null, 4));
+    return tree_root;
 }
 
 function parse_S(): TreeNode {
@@ -46,8 +49,9 @@ function parse_stmt(): TreeNode {
             n.children.push(new TreeNode("SEMI", T.expect("SEMI")));
             break;
         case "LBR":
+            n.children.push(new TreeNode("LBR", T.expect("LBR")));
             n.children.push(parse_stmt_list());
-            T.expect("RBR");
+            n.children.push(new TreeNode("RBR", T.expect("RBR")));
             break;
         default:
             throw Error("Something bad happened here in parse_stmt.");
@@ -74,10 +78,11 @@ function parse_cond(): TreeNode {
     n.children.push(parse_expr());
     n.children.push(new TreeNode("RP", T.expect("RP")));
     n.children.push(parse_stmt());
-    if (T.peek() === "ELSE") {
+    let result = T.peek();
+    if (result === "ELSE") {
         n.children.push(new TreeNode("ELSE", T.expect("ELSE")));
+        n.children.push(parse_stmt());
     }
-    n.children.push(parse_stmt());
     return n;
 }
 
@@ -93,10 +98,11 @@ function parse_assign(): TreeNode {
 function parse_expr(): TreeNode {
     //expr -> NUM | ID
     let n = new TreeNode("expr", null);
-    if (T.peek() === "NUM") {
+    let result = T.peek();
+    if (result === "NUM") {
         n.children.push(new TreeNode("NUM", T.expect("NUM")));
     }
-    else if (T.peek() === "ID") {
+    else if (result === "ID") {
         n.children.push(new TreeNode("ID", T.expect("ID")));
     }
     return n;

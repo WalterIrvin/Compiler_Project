@@ -24,21 +24,27 @@ var Tokenizer = /** @class */ (function () {
             var sym = terminal.sym;
             var rex = terminal.rex;
             rex.lastIndex = this.peek_idx;
-            var m = rex.exec(this.inputData);
-            if (m) {
-                var lexeme = m[0];
-                this.peek_idx += lexeme.length;
-                if (sym !== "WHITESPACE" && sym !== "COMMENT") {
-                    //return new token using sym, lexeme, and line num
-                    this.peek_idx = this.idx; // done with one peek, return peek_idx back to normal.
-                    return terminal.sym;
+            try {
+                var m = rex.exec(this.inputData);
+                if (m) {
+                    var lexeme = m[0];
+                    this.peek_idx += lexeme.length;
+                    if (sym !== "WHITESPACE" && sym !== "COMMENT") {
+                        //return new token using sym, lexeme, and line num
+                        this.peek_idx = this.idx; // done with one peek, return peek_idx back to normal.
+                        return terminal.sym;
+                    }
+                    else {
+                        //skip whitespace and get next real token
+                        var ret_token = this.next_peek();
+                        this.peek_idx = this.idx; // done going ahead, reset the peek_idx
+                        return ret_token;
+                    }
                 }
-                else {
-                    //skip whitespace and get next real token
-                    var ret_token = this.next_peek();
-                    this.peek_idx = this.idx; // done going ahead, reset the peek_idx
-                    return ret_token;
-                }
+            }
+            catch (e) {
+                console.log("regex failed");
+                console.log(this.inputData);
             }
         }
         //no match; syntax error

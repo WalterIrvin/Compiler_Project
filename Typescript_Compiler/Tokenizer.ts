@@ -30,23 +30,30 @@ export class Tokenizer {
             let sym = terminal.sym;
             let rex = terminal.rex;
             rex.lastIndex = this.peek_idx;
-            let m = rex.exec(this.inputData);
-            if (m) {
-                let lexeme = m[0];
-                this.peek_idx += lexeme.length;
+            try {
+                let m = rex.exec(this.inputData);
+                if (m) {
+                    let lexeme = m[0];
+                    this.peek_idx += lexeme.length;
 
-                if (sym !== "WHITESPACE" && sym !== "COMMENT") {
-                    //return new token using sym, lexeme, and line num
-                    this.peek_idx = this.idx; // done with one peek, return peek_idx back to normal.
-                    return terminal.sym;
-                }
-                else {
-                    //skip whitespace and get next real token
-                    let ret_token = this.next_peek();
-                    this.peek_idx = this.idx; // done going ahead, reset the peek_idx
-                    return ret_token;
+                    if (sym !== "WHITESPACE" && sym !== "COMMENT") {
+                        //return new token using sym, lexeme, and line num
+                        this.peek_idx = this.idx; // done with one peek, return peek_idx back to normal.
+                        return terminal.sym;
+                    }
+                    else {
+                        //skip whitespace and get next real token
+                        let ret_token = this.next_peek();
+                        this.peek_idx = this.idx; // done going ahead, reset the peek_idx
+                        return ret_token;
+                    }
                 }
             }
+            catch (e) {
+                console.log("regex failed");
+                console.log(this.inputData);
+            }
+            
         }
         //no match; syntax error
         this.peek_idx = this.idx;
