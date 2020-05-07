@@ -6,7 +6,7 @@ var grammarFileName = "gram.txt";
 
 
 var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
-    "\u0003\u0015\u009c\u0004\u0002\t\u0002\u0004\u0003\t\u0003\u0004\u0004",
+    "\u0003\u0017\u009d\u0004\u0002\t\u0002\u0004\u0003\t\u0003\u0004\u0004",
     "\t\u0004\u0004\u0005\t\u0005\u0004\u0006\t\u0006\u0004\u0007\t\u0007",
     "\u0004\b\t\b\u0004\t\t\t\u0004\n\t\n\u0004\u000b\t\u000b\u0004\f\t\f",
     "\u0004\r\t\r\u0004\u000e\t\u000e\u0004\u000f\t\u000f\u0004\u0010\t\u0010",
@@ -26,18 +26,18 @@ var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
     "\u0003\u000e\u0003\u000e\u0003\u000e\u0007\u000e\u0082\n\u000e\f\u000e",
     "\u000e\u000e\u0085\u000b\u000e\u0003\u000f\u0003\u000f\u0003\u000f\u0005",
     "\u000f\u008a\n\u000f\u0003\u0010\u0003\u0010\u0003\u0010\u0003\u0010",
-    "\u0003\u0010\u0005\u0010\u0091\n\u0010\u0003\u0011\u0003\u0011\u0003",
-    "\u0011\u0003\u0012\u0003\u0012\u0003\u0012\u0003\u0012\u0003\u0012\u0003",
-    "\u0012\u0003\u0012\u0002\u0006\u0010\u0012\u0018\u001a\u0013\u0002\u0004",
-    "\u0006\b\n\f\u000e\u0010\u0012\u0014\u0016\u0018\u001a\u001c\u001e ",
-    "\"\u0002\u0002\u0002\u0097\u0002$\u0003\u0002\u0002\u0002\u0004&\u0003",
-    "\u0002\u0002\u0002\u0006,\u0003\u0002\u0002\u0002\b3\u0003\u0002\u0002",
-    "\u0002\nC\u0003\u0002\u0002\u0002\fE\u0003\u0002\u0002\u0002\u000eI",
-    "\u0003\u0002\u0002\u0002\u0010K\u0003\u0002\u0002\u0002\u0012V\u0003",
+    "\u0003\u0010\u0003\u0010\u0005\u0010\u0092\n\u0010\u0003\u0011\u0003",
+    "\u0011\u0003\u0011\u0003\u0012\u0003\u0012\u0003\u0012\u0003\u0012\u0003",
+    "\u0012\u0003\u0012\u0003\u0012\u0002\u0006\u0010\u0012\u0018\u001a\u0013",
+    "\u0002\u0004\u0006\b\n\f\u000e\u0010\u0012\u0014\u0016\u0018\u001a\u001c",
+    "\u001e \"\u0002\u0002\u0002\u0099\u0002$\u0003\u0002\u0002\u0002\u0004",
+    "&\u0003\u0002\u0002\u0002\u0006,\u0003\u0002\u0002\u0002\b3\u0003\u0002",
+    "\u0002\u0002\nC\u0003\u0002\u0002\u0002\fE\u0003\u0002\u0002\u0002\u000e",
+    "I\u0003\u0002\u0002\u0002\u0010K\u0003\u0002\u0002\u0002\u0012V\u0003",
     "\u0002\u0002\u0002\u0014d\u0003\u0002\u0002\u0002\u0016k\u0003\u0002",
     "\u0002\u0002\u0018m\u0003\u0002\u0002\u0002\u001a{\u0003\u0002\u0002",
-    "\u0002\u001c\u0089\u0003\u0002\u0002\u0002\u001e\u0090\u0003\u0002\u0002",
-    "\u0002 \u0092\u0003\u0002\u0002\u0002\"\u0095\u0003\u0002\u0002\u0002",
+    "\u0002\u001c\u0089\u0003\u0002\u0002\u0002\u001e\u0091\u0003\u0002\u0002",
+    "\u0002 \u0093\u0003\u0002\u0002\u0002\"\u0096\u0003\u0002\u0002\u0002",
     "$%\u0005\u0004\u0003\u0002%\u0003\u0003\u0002\u0002\u0002&\'\u0005\f",
     "\u0007\u0002\'\u0005\u0003\u0002\u0002\u0002()\u0005\b\u0005\u0002)",
     "*\u0005\u0006\u0004\u0002*-\u0003\u0002\u0002\u0002+-\u0003\u0002\u0002",
@@ -54,43 +54,44 @@ var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
     "\u0002\u0002\u0002EF\u0007\f\u0002\u0002FG\u0005\u0006\u0004\u0002G",
     "H\u0007\r\u0002\u0002H\r\u0003\u0002\u0002\u0002IJ\u0005\u0010\t\u0002",
     "J\u000f\u0003\u0002\u0002\u0002KL\b\t\u0001\u0002LM\u0005\u0012\n\u0002",
-    "MS\u0003\u0002\u0002\u0002NO\f\u0004\u0002\u0002OP\u0007\u0010\u0002",
+    "MS\u0003\u0002\u0002\u0002NO\f\u0004\u0002\u0002OP\u0007\u0012\u0002",
     "\u0002PR\u0005\u0012\n\u0002QN\u0003\u0002\u0002\u0002RU\u0003\u0002",
     "\u0002\u0002SQ\u0003\u0002\u0002\u0002ST\u0003\u0002\u0002\u0002T\u0011",
     "\u0003\u0002\u0002\u0002US\u0003\u0002\u0002\u0002VW\b\n\u0001\u0002",
     "WX\u0005\u0014\u000b\u0002X^\u0003\u0002\u0002\u0002YZ\f\u0004\u0002",
-    "\u0002Z[\u0007\u0011\u0002\u0002[]\u0005\u0014\u000b\u0002\\Y\u0003",
+    "\u0002Z[\u0007\u0013\u0002\u0002[]\u0005\u0014\u000b\u0002\\Y\u0003",
     "\u0002\u0002\u0002]`\u0003\u0002\u0002\u0002^\\\u0003\u0002\u0002\u0002",
     "^_\u0003\u0002\u0002\u0002_\u0013\u0003\u0002\u0002\u0002`^\u0003\u0002",
-    "\u0002\u0002ab\u0007\u0012\u0002\u0002be\u0005\u0014\u000b\u0002ce\u0005",
+    "\u0002\u0002ab\u0007\u0014\u0002\u0002be\u0005\u0014\u000b\u0002ce\u0005",
     "\u0016\f\u0002da\u0003\u0002\u0002\u0002dc\u0003\u0002\u0002\u0002e",
-    "\u0015\u0003\u0002\u0002\u0002fg\u0005\u0018\r\u0002gh\u0007\u0013\u0002",
+    "\u0015\u0003\u0002\u0002\u0002fg\u0005\u0018\r\u0002gh\u0007\u0015\u0002",
     "\u0002hi\u0005\u0018\r\u0002il\u0003\u0002\u0002\u0002jl\u0005\u0018",
     "\r\u0002kf\u0003\u0002\u0002\u0002kj\u0003\u0002\u0002\u0002l\u0017",
     "\u0003\u0002\u0002\u0002mn\b\r\u0001\u0002no\u0005\u001a\u000e\u0002",
-    "ox\u0003\u0002\u0002\u0002pq\f\u0005\u0002\u0002qr\u0007\u0014\u0002",
+    "ox\u0003\u0002\u0002\u0002pq\f\u0005\u0002\u0002qr\u0007\u0016\u0002",
     "\u0002rw\u0005\u001a\u000e\u0002st\f\u0004\u0002\u0002tu\u0007\u000e",
     "\u0002\u0002uw\u0005\u001a\u000e\u0002vp\u0003\u0002\u0002\u0002vs\u0003",
     "\u0002\u0002\u0002wz\u0003\u0002\u0002\u0002xv\u0003\u0002\u0002\u0002",
     "xy\u0003\u0002\u0002\u0002y\u0019\u0003\u0002\u0002\u0002zx\u0003\u0002",
     "\u0002\u0002{|\b\u000e\u0001\u0002|}\u0005\u001c\u000f\u0002}\u0083",
     "\u0003\u0002\u0002\u0002~\u007f\f\u0004\u0002\u0002\u007f\u0080\u0007",
-    "\u0015\u0002\u0002\u0080\u0082\u0005\u001c\u000f\u0002\u0081~\u0003",
+    "\u0017\u0002\u0002\u0080\u0082\u0005\u001c\u000f\u0002\u0081~\u0003",
     "\u0002\u0002\u0002\u0082\u0085\u0003\u0002\u0002\u0002\u0083\u0081\u0003",
     "\u0002\u0002\u0002\u0083\u0084\u0003\u0002\u0002\u0002\u0084\u001b\u0003",
     "\u0002\u0002\u0002\u0085\u0083\u0003\u0002\u0002\u0002\u0086\u0087\u0007",
     "\u000e\u0002\u0002\u0087\u008a\u0005\u001c\u000f\u0002\u0088\u008a\u0005",
     "\u001e\u0010\u0002\u0089\u0086\u0003\u0002\u0002\u0002\u0089\u0088\u0003",
-    "\u0002\u0002\u0002\u008a\u001d\u0003\u0002\u0002\u0002\u008b\u0091\u0007",
-    "\u000f\u0002\u0002\u008c\u008d\u0007\u0007\u0002\u0002\u008d\u008e\u0005",
-    "\u000e\b\u0002\u008e\u008f\u0007\b\u0002\u0002\u008f\u0091\u0003\u0002",
-    "\u0002\u0002\u0090\u008b\u0003\u0002\u0002\u0002\u0090\u008c\u0003\u0002",
-    "\u0002\u0002\u0091\u001f\u0003\u0002\u0002\u0002\u0092\u0093\u0007\u000b",
-    "\u0002\u0002\u0093\u0094\u0005\u000e\b\u0002\u0094!\u0003\u0002\u0002",
-    "\u0002\u0095\u0096\u0007\u0006\u0002\u0002\u0096\u0097\u0007\u0007\u0002",
-    "\u0002\u0097\u0098\u0005\u000e\b\u0002\u0098\u0099\u0007\b\u0002\u0002",
-    "\u0099\u009a\u0005\f\u0007\u0002\u009a#\u0003\u0002\u0002\u0002\u000e",
-    ",3CS^dkvx\u0083\u0089\u0090"].join("");
+    "\u0002\u0002\u0002\u008a\u001d\u0003\u0002\u0002\u0002\u008b\u0092\u0007",
+    "\u0011\u0002\u0002\u008c\u0092\u0007\u0010\u0002\u0002\u008d\u008e\u0007",
+    "\u0007\u0002\u0002\u008e\u008f\u0005\u000e\b\u0002\u008f\u0090\u0007",
+    "\b\u0002\u0002\u0090\u0092\u0003\u0002\u0002\u0002\u0091\u008b\u0003",
+    "\u0002\u0002\u0002\u0091\u008c\u0003\u0002\u0002\u0002\u0091\u008d\u0003",
+    "\u0002\u0002\u0002\u0092\u001f\u0003\u0002\u0002\u0002\u0093\u0094\u0007",
+    "\u000b\u0002\u0002\u0094\u0095\u0005\u000e\b\u0002\u0095!\u0003\u0002",
+    "\u0002\u0002\u0096\u0097\u0007\u0006\u0002\u0002\u0097\u0098\u0007\u0007",
+    "\u0002\u0002\u0098\u0099\u0005\u000e\b\u0002\u0099\u009a\u0007\b\u0002",
+    "\u0002\u009a\u009b\u0005\f\u0007\u0002\u009b#\u0003\u0002\u0002\u0002",
+    "\u000e,3CS^dkvx\u0083\u0089\u0091"].join("");
 
 
 var atn = new antlr4.atn.ATNDeserializer().deserialize(serializedATN);
@@ -100,12 +101,13 @@ var decisionsToDFA = atn.decisionToState.map( function(ds, index) { return new a
 var sharedContextCache = new antlr4.PredictionContextCache();
 
 var literalNames = [ null, "';'", null, null, "'while'", null, null, "'if'", 
-                     "'else'", "'return'", null, null, "'-'", null, "'or'", 
-                     "'and'", "'not'" ];
+                     "'else'", "'return'", null, null, "'-'", null, null, 
+                     null, "'or'", "'and'", "'not'" ];
 
 var symbolicNames = [ null, "SEMI", "WHITESPACE", "COMMENT", "WHILE", "LP", 
                       "RP", "IF", "ELSE", "RETURN", "LBR", "RBR", "MINUS", 
-                      "NUM", "OR", "AND", "NOT", "RELOP", "PLUS", "MULOP" ];
+                      "TYPE", "FPNUM", "NUM", "OR", "AND", "NOT", "RELOP", 
+                      "PLUS", "MULOP" ];
 
 var ruleNames =  [ "start", "program", "stmts", "stmt", "cond", "braceblock", 
                    "expr", "orexp", "andexp", "notexp", "rel", "sum", "term", 
@@ -142,13 +144,15 @@ gramParser.RETURN = 9;
 gramParser.LBR = 10;
 gramParser.RBR = 11;
 gramParser.MINUS = 12;
-gramParser.NUM = 13;
-gramParser.OR = 14;
-gramParser.AND = 15;
-gramParser.NOT = 16;
-gramParser.RELOP = 17;
-gramParser.PLUS = 18;
-gramParser.MULOP = 19;
+gramParser.TYPE = 13;
+gramParser.FPNUM = 14;
+gramParser.NUM = 15;
+gramParser.OR = 16;
+gramParser.AND = 17;
+gramParser.NOT = 18;
+gramParser.RELOP = 19;
+gramParser.PLUS = 20;
+gramParser.MULOP = 21;
 
 gramParser.RULE_start = 0;
 gramParser.RULE_program = 1;
@@ -970,6 +974,7 @@ gramParser.prototype.notexp = function() {
             break;
         case gramParser.LP:
         case gramParser.MINUS:
+        case gramParser.FPNUM:
         case gramParser.NUM:
             this.enterOuterAlt(localctx, 2);
             this.state = 97;
@@ -1362,6 +1367,7 @@ gramParser.prototype.neg = function() {
             this.neg();
             break;
         case gramParser.LP:
+        case gramParser.FPNUM:
         case gramParser.NUM:
             this.enterOuterAlt(localctx, 2);
             this.state = 134;
@@ -1405,6 +1411,10 @@ FactorContext.prototype.NUM = function() {
     return this.getToken(gramParser.NUM, 0);
 };
 
+FactorContext.prototype.FPNUM = function() {
+    return this.getToken(gramParser.FPNUM, 0);
+};
+
 FactorContext.prototype.LP = function() {
     return this.getToken(gramParser.LP, 0);
 };
@@ -1439,7 +1449,7 @@ gramParser.prototype.factor = function() {
     var localctx = new FactorContext(this, this._ctx, this.state);
     this.enterRule(localctx, 28, gramParser.RULE_factor);
     try {
-        this.state = 142;
+        this.state = 143;
         this._errHandler.sync(this);
         switch(this._input.LA(1)) {
         case gramParser.NUM:
@@ -1447,13 +1457,18 @@ gramParser.prototype.factor = function() {
             this.state = 137;
             this.match(gramParser.NUM);
             break;
-        case gramParser.LP:
+        case gramParser.FPNUM:
             this.enterOuterAlt(localctx, 2);
             this.state = 138;
-            this.match(gramParser.LP);
+            this.match(gramParser.FPNUM);
+            break;
+        case gramParser.LP:
+            this.enterOuterAlt(localctx, 3);
             this.state = 139;
-            this.expr();
+            this.match(gramParser.LP);
             this.state = 140;
+            this.expr();
+            this.state = 141;
             this.match(gramParser.RP);
             break;
         default:
@@ -1521,9 +1536,9 @@ gramParser.prototype.return_stmt = function() {
     this.enterRule(localctx, 30, gramParser.RULE_return_stmt);
     try {
         this.enterOuterAlt(localctx, 1);
-        this.state = 144;
-        this.match(gramParser.RETURN);
         this.state = 145;
+        this.match(gramParser.RETURN);
+        this.state = 146;
         this.expr();
     } catch (re) {
     	if(re instanceof antlr4.error.RecognitionException) {
@@ -1599,15 +1614,15 @@ gramParser.prototype.loop = function() {
     this.enterRule(localctx, 32, gramParser.RULE_loop);
     try {
         this.enterOuterAlt(localctx, 1);
-        this.state = 147;
-        this.match(gramParser.WHILE);
         this.state = 148;
-        this.match(gramParser.LP);
+        this.match(gramParser.WHILE);
         this.state = 149;
-        this.expr();
+        this.match(gramParser.LP);
         this.state = 150;
-        this.match(gramParser.RP);
+        this.expr();
         this.state = 151;
+        this.match(gramParser.RP);
+        this.state = 152;
         this.braceblock();
     } catch (re) {
     	if(re instanceof antlr4.error.RecognitionException) {

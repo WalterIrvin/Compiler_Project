@@ -111,7 +111,15 @@ function stmtNodeCode(n) {
 }
 function returnstmtNodeCode(n) {
     //return-stmt -> RETURN expr
-    exprNodeCode(n.children[1]);
+    var type = exprNodeCode(n.children[1]);
+    if (type === VarType.FLOAT) {
+        emit("; STMTNODECODE ROUND START");
+        emit("movq xmm0, [rsp]"); // pop value
+        emit("add rsp, 8");
+        emit("cvtsd2si rax, xmm0"); // round to int
+        emit("push rax");
+        emit("; STMTNODECODE ROUND END");
+    }
     emit("pop rax");
     emit("ret");
 }
@@ -190,6 +198,11 @@ function factorNodeCode(n) {
             return VarType.INTEGER;
         case "LP":
             return exprNodeCode(n.children[1]);
+        case "FPNUM":
+            var fp = parseFloat(child.token.lexeme).toPrecision(16);
+            emit("mov rax, __float64__(" + fp + ")");
+            emit("push rax");
+            return VarType.FLOAT;
         default:
             ICE();
     }
@@ -204,13 +217,31 @@ function orexpNodeCode(n) {
     }
     else {
         var orexpType = orexpNodeCode(n.children[0]);
-        convertStackTopToZeroOrOneInteger(orexpType);
-        var lbl = label();
+        if (orexpType == VarType.FLOAT) {
+            emit("movq xmm0, [rsp]"); // first operand
+            emit("xorpd xmm1, xmm1"); // zero out xmm1
+            emit("cmpneqsd xmm0, xmm1");
+            emit("movq [rsp], xmm0");
+            emit("and qword[rsp], 1");
+        }
+        else {
+            convertStackTopToZeroOrOneInteger(orexpType);
+        }
         emit("cmp qword [rsp], 0");
+        var lbl = label();
         emit("jne " + lbl);
         emit("add rsp,8"); //discard left result (0)
         var andexpType = andexpNodeCode(n.children[2]);
-        convertStackTopToZeroOrOneInteger(andexpType);
+        if (andexpType == VarType.FLOAT) {
+            emit("movq xmm0, [rsp]"); // first operand
+            emit("xorpd xmm1, xmm1"); // zero out xmm1
+            emit("cmpneqsd xmm0, xmm1");
+            emit("movq [rsp], xmm0");
+            emit("and qword [rsp], 1");
+        }
+        else {
+            convertStackTopToZeroOrOneInteger(andexpType);
+        }
         emit(lbl + ":");
         return VarType.INTEGER; //always integer, even if float operands
     }
@@ -225,11 +256,12 @@ function sumNodeCode(n) {
         var sumType = sumNodeCode(n.children[0]);
         //emit("; in sumNodeCode; doing term");
         var termType = termNodeCode(n.children[2]);
-        if (sumType !== VarType.INTEGER || termType != VarType.INTEGER) {
+        if (sumType !== termType || sumType == VarType.STRING || termType === VarType.STRING) {
             ICE();
             //error!
         }
-        else {
+        else if (sumType === VarType.INTEGER) {
+            //int math
             emit("pop rbx"); //second operand
             emit("pop rax"); //first operand
             switch (n.children[1].sym) {
@@ -246,6 +278,32 @@ function sumNodeCode(n) {
             //emit("; done with sumNodeCode");
             return VarType.INTEGER;
         }
+        else {
+            //float math
+            emit("; START FLOAT MATH");
+            switch (n.children[1].sym) {
+                case "PLUS":
+                    emit("movq xmm1, [rsp]"); // second operand
+                    emit("add rsp, 8");
+                    emit("movq xmm0, [rsp]"); // first operand
+                    emit("add rsp, 8");
+                    emit("addsd xmm0, xmm1");
+                    break;
+                case "MINUS":
+                    emit("movq xmm1, [rsp]"); // second operand
+                    emit("add rsp, 8");
+                    emit("movq xmm0, [rsp]"); // first operand
+                    emit("add rsp, 8");
+                    emit("subsd xmm0, xmm1");
+                    break;
+                default:
+                    ICE();
+            }
+            emit("sub rsp, 8"); // push back onto stack
+            emit("movq [rsp], xmm0");
+            emit("; END FLOAT MATH");
+            return VarType.FLOAT;
+        }
     }
 }
 function convertStackTopToZeroOrOneInteger(type) {
@@ -257,7 +315,7 @@ function convertStackTopToZeroOrOneInteger(type) {
     }
     else {
         //error
-        throw Error("Invalid type");
+        throw Error("Invalid type " + type);
     }
 }
 function andexpNodeCode(n) {
@@ -267,14 +325,32 @@ function andexpNodeCode(n) {
     }
     else {
         var andexp = andexpNodeCode(n.children[0]);
-        convertStackTopToZeroOrOneInteger(andexp);
+        if (andexp === VarType.FLOAT) {
+            emit("movq xmm0, [rsp]"); // first operand
+            emit("xorpd xmm1, xmm1"); // zero out xmm1
+            emit("cmpneqsd xmm0, xmm1");
+            emit("movq [rsp], xmm0");
+            emit("and qword [rsp], 1");
+        }
+        else {
+            convertStackTopToZeroOrOneInteger(andexp);
+        }
         var lbl_false = label();
         var lbl_end = label();
         emit("cmp qword [rsp], 1");
         emit("jne " + lbl_false); // first case false, jump to end-and
         emit("add rsp,8"); //discard left result (0)
         var notexp = notexpNodeCode(n.children[2]);
-        convertStackTopToZeroOrOneInteger(notexp);
+        if (notexp === VarType.FLOAT) {
+            emit("movq xmm0, [rsp]"); // first operand
+            emit("xorpd xmm1, xmm1"); // zero out xmm1
+            emit("cmpneqsd xmm0, xmm1");
+            emit("movq [rsp], xmm0");
+            emit("and qword [rsp], 1");
+        }
+        else {
+            convertStackTopToZeroOrOneInteger(notexp);
+        }
         emit("cmp qword [rsp], 1");
         emit("jne " + lbl_false); //second case false, jump to end-and
         //both cases are true - push 1 to rax?
@@ -292,33 +368,40 @@ function andexpNodeCode(n) {
 }
 function notexpNodeCode(n) {
     //NOT notexp | rel;
-    //Breaks on test 15 because
-    //N structure looks like such:
-    //NOT , notexp
-    //and It's trying to send NOT through notexp code, which doesn't work.
     if (n.children.length == 1) {
         return relexpNodeCode(n.children[0]);
     }
     else {
         var result = notexpNodeCode(n.children[1]);
-        convertStackTopToZeroOrOneInteger(result); //convert value to 0-1, easier to work with
-        //NOT
-        var lbl = label();
-        var lbl_end = label();
-        emit("cmp qword [rsp], 1"); //check if true
-        emit("je " + lbl);
-        emit("; If 0, make 1");
-        emit("pop rax");
-        emit("mov rax, 1");
-        emit("push rax");
-        emit("jmp " + lbl_end);
-        emit(lbl + ":"); //if true, make false
-        emit("; If 1, make 0");
-        emit("pop rax");
-        emit("mov rax, 0");
-        emit("push rax");
-        emit(lbl_end + ":");
-        return result;
+        if (result === VarType.FLOAT) {
+            emit("; BEGIN FLOAT NOT");
+            emit("movq xmm0, [rsp]"); // first operand
+            emit("xorpd xmm1, xmm1"); // zero out xmm1
+            emit("cmpeqsd xmm0, xmm1");
+            emit("movq [rsp], xmm0");
+            emit("and qword [rsp], 1");
+            emit("; END FLOAT NOT");
+        }
+        else {
+            convertStackTopToZeroOrOneInteger(result); //convert value to 0-1, easier to work with
+            //NOT
+            var lbl = label();
+            var lbl_end = label();
+            emit("cmp qword [rsp], 1"); //check if true
+            emit("je " + lbl);
+            emit("; If 0, make 1");
+            emit("pop rax");
+            emit("mov rax, 1");
+            emit("push rax");
+            emit("jmp " + lbl_end);
+            emit(lbl + ":"); //if true, make false
+            emit("; If 1, make 0");
+            emit("pop rax");
+            emit("mov rax, 0");
+            emit("push rax");
+            emit(lbl_end + ":");
+        }
+        return VarType.INTEGER;
     }
 }
 function relexpNodeCode(n) {
@@ -328,35 +411,69 @@ function relexpNodeCode(n) {
     else {
         var sum1Type = sumNodeCode(n.children[0]);
         var sum2Type = sumNodeCode(n.children[2]);
-        if (sum1Type !== VarType.INTEGER || sum2Type != VarType.INTEGER) {
-            //error
+        if (sum1Type === VarType.INTEGER && sum2Type === VarType.INTEGER) {
+            emit("pop rax"); //second operand
+            //first operand is on stack
+            emit("cmp [rsp],rax"); //do the compare
+            switch (n.children[1].token.lexeme) {
+                case ">=":
+                    emit("setge al");
+                    break;
+                case "<=":
+                    emit("setle al");
+                    break;
+                case ">":
+                    emit("setg al");
+                    break;
+                case "<":
+                    emit("setl al");
+                    break;
+                case "==":
+                    emit("sete al");
+                    break;
+                case "!=":
+                    emit("setne al");
+                    break;
+                default: ICE();
+            }
+            emit("movzx qword rax, al"); //move with zero extend
+            emit("mov [rsp], rax");
         }
-        emit("pop rax"); //second operand
-        //first operand is on stack
-        emit("cmp [rsp],rax"); //do the compare
-        switch (n.children[1].token.lexeme) {
-            case ">=":
-                emit("setge al");
-                break;
-            case "<=":
-                emit("setle al");
-                break;
-            case ">":
-                emit("setg  al");
-                break;
-            case "<":
-                emit("setl  al");
-                break;
-            case "==":
-                emit("sete  al");
-                break;
-            case "!=":
-                emit("setne al");
-                break;
-            default: ICE();
+        else if (sum1Type === VarType.FLOAT && sum2Type === VarType.FLOAT) {
+            // float relation
+            emit("; FLOAT REL START");
+            emit("movq xmm1, [rsp]"); // second operand
+            emit("add rsp, 8");
+            emit("movq xmm0, [rsp]"); // first operand
+            //emit("add rsp, 8");
+            switch (n.children[1].token.lexeme) {
+                case ">=":
+                    emit("cmpnlesd xmm0, xmm1");
+                    break;
+                case "<=":
+                    emit("cmplesd xmm0, xmm1");
+                    break;
+                case ">":
+                    emit("cmpnltsd xmm0, xmm1");
+                    break;
+                case "<":
+                    emit("cmpltsd xmm0, xmm1");
+                    break;
+                case "==":
+                    emit("cmpeqsd xmm0, xmm1");
+                    break;
+                case "!=":
+                    emit("cmpneqsd xmm0, xmm1");
+                    break;
+                default: ICE();
+            }
+            emit("movq[rsp], xmm0");
+            emit("and qword[rsp], 1");
+            emit("; FLOAT REL END");
         }
-        emit("movzx qword rax, al"); //move with zero extend
-        emit("mov [rsp], rax");
+        else {
+            ICE();
+        }
         return VarType.INTEGER;
     }
 }
@@ -370,31 +487,61 @@ function termNodeCode(n) {
     }
     else {
         //else send it to term mulop then neg
-        console.log(n.children[1]);
         var val1 = termNodeCode(n.children[0]);
         var val = negNodeCode(n.children[2]);
         if (val !== val1) {
             throw Error("Error invalid types");
         }
-        if (n.children[1].token.lexeme === "*") {
-            emit("pop rbx"); //second operand
-            emit("pop rax"); //first operand
-            emit("imul rbx");
-            emit("push rax");
+        if (val === VarType.INTEGER) {
+            if (n.children[1].token.lexeme === "*") {
+                emit("pop rbx"); //second operand
+                emit("pop rax"); //first operand
+                emit("imul rbx");
+                emit("push rax");
+            }
+            else if (n.children[1].token.lexeme === "/") {
+                emit("mov rdx, 0");
+                emit("pop rbx");
+                emit("pop rax");
+                emit("idiv rbx");
+                emit("push rax");
+            }
+            else if (n.children[1].token.lexeme === "%") {
+                emit("mov rdx, 0");
+                emit("pop rbx");
+                emit("pop rax");
+                emit("idiv rbx");
+                emit("push rdx");
+            }
         }
-        else if (n.children[1].token.lexeme === "/") {
-            emit("mov rdx, 0");
-            emit("pop rbx");
-            emit("pop rax");
-            emit("idiv rbx");
-            emit("push rax");
-        }
-        else if (n.children[1].token.lexeme === "%") {
-            emit("mov rdx, 0");
-            emit("pop rbx");
-            emit("pop rax");
-            emit("idiv rbx");
-            emit("push rdx");
+        else if (val === VarType.FLOAT) {
+            if (n.children[1].token.lexeme === "*") {
+                emit("movq xmm1, [rsp]"); // second operand
+                emit("add rsp, 8");
+                emit("movq xmm0, [rsp]"); // first operand
+                emit("add rsp, 8");
+                emit("mulsd xmm0, xmm1");
+                emit("sub rsp, 8"); // push back onto stack
+                emit("movq [rsp], xmm0");
+            }
+            else if (n.children[1].token.lexeme === "/") {
+                emit("movq xmm1, [rsp]"); // second operand
+                emit("add rsp, 8");
+                emit("movq xmm0, [rsp]"); // first operand
+                emit("add rsp, 8");
+                emit("divsd xmm0, xmm1");
+                emit("sub rsp, 8"); // push back onto stack
+                emit("movq [rsp], xmm0");
+            }
+            else if (n.children[1].token.lexeme === "%") {
+                emit("movq xmm1, [rsp]"); // second operand
+                emit("add rsp, 8");
+                emit("movq xmm0, [rsp]"); // first operand
+                emit("add rsp, 8");
+                emit("divsd xmm0, xmm1");
+                emit("sub rsp, 8"); // push back onto stack
+                emit("movq [rsp], xmm1");
+            }
         }
         return val;
     }
@@ -407,10 +554,22 @@ function negNodeCode(n) {
     }
     else {
         var val = negNodeCode(n.children[1]);
-        emit("pop rax"); // get value off of stack
-        emit("neg rax");
-        emit("push rax"); // push back onto stack
+        if (val === VarType.INTEGER) {
+            emit("pop rax"); // get value off of stack
+            emit("neg rax");
+            emit("push rax"); // push back onto stack
+        }
+        else if (val === VarType.FLOAT) {
+            emit("movq xmm0, [rsp]"); //;xmm0 <- value
+            emit("xorps xmm1, xmm1"); //;xmm1 <- 0
+            emit("subsd xmm1, xmm0"); //;xmm1 <- 0-value = -value
+            emit("movq [rsp], xmm1"); //;overwrite with result
+        }
         return val;
     }
 }
+//emit("movq xmm0, [rsp]"); // pop value
+//emit("add rsp, 8");
+//emit("sub rsp, 8");  // push back onto stack
+//emit("movq [rsp], xmm0");
 //# sourceMappingURL=parser.js.map

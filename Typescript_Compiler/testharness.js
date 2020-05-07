@@ -1,9 +1,9 @@
 "use strict";
 exports.__esModule = true;
 //to start at a given test number, change this
-var startAt = 1;
+var startAt = 1; //50;
 //to stop early, change this
-var endAt = 99999;
+var endAt = 105;
 //set this to true to get more status messages
 var VERBOSE = false;
 var asmfile = "xyz.asm";
